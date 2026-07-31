@@ -1,0 +1,38 @@
+Licensing of the legal agreement templates in this directory
+============================================================
+
+Every file in this directory is a legal agreement template published by
+Common Paper (https://commonpaper.com) and retrieved from the Common Paper
+GitHub organisation at https://github.com/CommonPaper.
+
+Common Paper agreements are free to use and modify under the Creative Commons
+Attribution 4.0 International licence (CC BY 4.0):
+
+    https://creativecommons.org/licenses/by/4.0/
+
+Under CC BY 4.0 you are free to share and adapt this material for any purpose,
+including commercially, provided you give appropriate credit to Common Paper,
+link to the licence, and indicate if changes were made.
+
+Attribution
+-----------
+
+    Legal agreement templates by Common Paper (https://commonpaper.com),
+    licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+
+Documents derived from these templates must carry the same attribution, and
+must indicate that they have been modified from the Common Paper originals.
+
+Provenance
+----------
+
+The source repository and commit for each file are recorded in catalog.json in
+the project root. The files are unmodified copies of the Common Paper
+originals as at 31 July 2026.
+
+Note
+----
+
+These templates are provided for use as drafting starting points. They are not
+legal advice, and nothing here creates a solicitor-client or attorney-client
+relationship.
