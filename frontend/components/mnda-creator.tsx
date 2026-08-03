@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { AgreementDocument } from "./agreement-document";
 import { MndaForm } from "./mnda-form";
+import { agreementFileName, buildAgreement } from "@/lib/agreement";
 import type { CoverPageTemplate } from "@/lib/cover-page-template";
 import { type MndaValues, createDefaultValues, isComplete } from "@/lib/mnda";
 
@@ -21,11 +22,51 @@ export function MndaCreator({ template, standardTerms }: MndaCreatorProps) {
   const [values, setValues] = useState<MndaValues>(() =>
     createDefaultValues(template),
   );
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const agreement = useMemo(
+    () => buildAgreement(template, values, standardTerms),
+    [template, values, standardTerms],
+  );
 
   const update = (patch: Partial<MndaValues>) =>
     setValues((current) => ({ ...current, ...patch }));
 
-  const complete = isComplete(values);
+  /**
+   * Builds the PDF in the browser and saves it straight to disk.
+   *
+   * The renderer is imported on demand: it is by far the largest dependency
+   * here, and nobody should pay for it just to load the form.
+   */
+  const download = async () => {
+    setBusy(true);
+    setError(null);
+    let url: string | undefined;
+
+    try {
+      const [{ pdf }, { MndaPdf }] = await Promise.all([
+        import("@react-pdf/renderer"),
+        import("./mnda-pdf"),
+      ]);
+
+      const blob = await pdf(<MndaPdf agreement={agreement} />).toBlob();
+      url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = agreementFileName(values);
+      link.click();
+    } catch (cause) {
+      console.error(cause);
+      setError("Could not build the PDF. Please try again.");
+    } finally {
+      // Revoked on the next tick so the download has taken the URL.
+      const created = url;
+      if (created) setTimeout(() => URL.revokeObjectURL(created), 0);
+      setBusy(false);
+    }
+  };
 
   return (
     <>
@@ -40,18 +81,25 @@ export function MndaCreator({ template, standardTerms }: MndaCreatorProps) {
             </p>
           </div>
 
-          {!complete && (
-            <p className="text-sm text-slate-500">
-              Blank details will print as empty lines to complete by hand.
+          {error ? (
+            <p role="alert" className="text-sm text-red-600">
+              {error}
             </p>
+          ) : (
+            !isComplete(values) && (
+              <p className="text-sm text-slate-500">
+                Blank details become empty lines to complete by hand.
+              </p>
+            )
           )}
 
           <button
             type="button"
-            onClick={() => window.print()}
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
+            onClick={download}
+            disabled={busy}
+            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
           >
-            Download PDF
+            {busy ? "Preparing…" : "Download PDF"}
           </button>
         </div>
       </header>
@@ -62,11 +110,7 @@ export function MndaCreator({ template, standardTerms }: MndaCreatorProps) {
         </div>
 
         <div className="paper rounded-lg border border-slate-200 bg-white p-8 shadow-sm sm:p-12">
-          <AgreementDocument
-            template={template}
-            values={values}
-            standardTerms={standardTerms}
-          />
+          <AgreementDocument agreement={agreement} />
         </div>
       </main>
     </>

@@ -26,12 +26,15 @@ templates, and the page reads them directly:
 | --- | --- |
 | `lib/templates.ts` | Reads `../templates/*.md`. Server-only. |
 | `lib/cover-page-template.ts` | Parses the cover page into headings, `<label>` hints, `- [ ]` choices and `[placeholders]`. Pure. |
+| `lib/inline-markdown.ts` | Parses `**bold**` and `[links](url)` into text runs. Pure. |
 | `lib/mnda.ts` | The user's values, and the functions turning them into cover page wording. Pure. |
 | `lib/standard-terms.ts` | Prepares the Standard Terms for rendering. Pure. |
+| `lib/agreement.ts` | Builds the finished agreement as a display-independent model. Pure. |
 | `app/page.tsx` | Server Component: reads and parses the templates, hands them to the client. |
 | `components/mnda-creator.tsx` | Owns the values; form beside live preview. |
 | `components/mnda-form.tsx` | The input fields. Labels and hints come from the template. |
-| `components/agreement-document.tsx` | The agreement as it will appear on paper. |
+| `components/agreement-document.tsx` | Renders the agreement model to HTML. |
+| `components/mnda-pdf.tsx` | Renders the same model to PDF. |
 
 Because the templates are parsed rather than restated, the form's help text, its
 radio button wording and the suggested purpose all come from the markdown. Edit
@@ -42,9 +45,22 @@ so the same merge logic could back a server-side renderer later without change.
 
 ### Downloading
 
-"Download PDF" calls `window.print()`. The print rules at the bottom of
-`app/globals.css` hide the app chrome and let the agreement fill the page, so
-the browser's own "Save as PDF" produces the document. There is no PDF library.
+"Download PDF" builds the file in the browser with
+[`@react-pdf/renderer`](https://react-pdf.org) and saves it straight to disk —
+no print dialog. The renderer is imported on demand inside the click handler,
+because it is by far the largest dependency here and nobody should pay for it
+just to load the form.
+
+The PDF uses the built-in Times faces, so no font files are downloaded and the
+output is small with real selectable, searchable text.
+
+**Both the preview and the PDF render the one `Agreement` model** from
+`lib/agreement.ts`. That extra layer exists so the document a user reads on
+screen and the document they download cannot drift apart — for a legal agreement
+that matters more than the indirection costs.
+
+`app/globals.css` also carries print rules, so browser print (⌘P) still produces
+a clean copy of the agreement without the app chrome.
 
 ### A note on `../templates`
 

@@ -13,9 +13,9 @@ body {
 }
 
 /*
- * Typography for the agreement itself. Scoped rather than written as utility
- * classes because most of this markup comes from react-markdown, which renders
- * plain `<p>`, `<ol>` and `<strong>` elements we cannot annotate directly.
+ * Typography for the agreement itself. Scoped to element selectors rather than
+ * written as utility classes so the document's prose, list and emphasis styling
+ * lives in one place, mirroring the PDF stylesheet in `components/mnda-pdf.tsx`.
  */
 .document {
   font-family: var(--font-serif);

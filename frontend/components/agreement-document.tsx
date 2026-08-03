@@ -1,76 +1,76 @@
 import type { ReactNode } from "react";
-import ReactMarkdown from "react-markdown";
 
-import { type CoverPageTemplate, SECTION } from "@/lib/cover-page-template";
-import {
-  type MndaValues,
-  type Party,
-  formatEffectiveDate,
-  resolveConfidentialityTerm,
-  resolveMndaTerm,
-} from "@/lib/mnda";
-
-interface AgreementDocumentProps {
-  template: CoverPageTemplate;
-  values: MndaValues;
-  standardTerms: string;
-}
+import type { Agreement, SignatureRow } from "@/lib/agreement";
+import type { TextRun } from "@/lib/inline-markdown";
 
 /**
- * The agreement as it will appear on paper: the filled cover page followed by
- * the full Standard Terms. This is what the print stylesheet exports to PDF, so
- * it renders the finished document only — no editing affordances.
+ * The agreement as it appears on screen. A direct rendering of the shared
+ * `Agreement` model — the PDF renders the same model, so the two stay in step.
  */
-export function AgreementDocument({
-  template,
-  values,
-  standardTerms,
-}: AgreementDocumentProps) {
+export function AgreementDocument({ agreement }: { agreement: Agreement }) {
   return (
     <article className="document">
-      <h1>{template.title}</h1>
-      <ReactMarkdown>{template.intro}</ReactMarkdown>
+      <h1>{agreement.title}</h1>
+      <p>
+        <Runs runs={agreement.intro} />
+      </p>
 
       <Divider>Cover Page</Divider>
 
-      <Field heading={SECTION.purpose}>
-        <Value text={values.purpose} />
-      </Field>
+      {agreement.fields.map((field) => (
+        <section key={field.heading} className="avoid-break">
+          <h2>{field.heading}</h2>
+          <p className="whitespace-pre-line">
+            {field.lines.map((line, index) => (
+              <span key={line.label ?? index}>
+                {index > 0 && <br />}
+                {line.label && `${line.label}: `}
+                <Value text={line.value} />
+              </span>
+            ))}
+          </p>
+        </section>
+      ))}
 
-      <Field heading={SECTION.effectiveDate}>
-        <Value text={formatEffectiveDate(values.effectiveDate)} />
-      </Field>
+      <p className="avoid-break">{agreement.signingStatement}</p>
 
-      <Field heading={SECTION.mndaTerm}>
-        <Value text={resolveMndaTerm(template, values)} />
-      </Field>
+      <SignatureTable rows={agreement.signatureRows} />
 
-      <Field heading={SECTION.confidentiality}>
-        <Value text={resolveConfidentialityTerm(template, values)} />
-      </Field>
-
-      <Field heading={SECTION.governingLaw}>
-        Governing Law: <Value text={values.governingLaw} />
-        <br />
-        Jurisdiction: <Value text={values.jurisdiction} />
-      </Field>
-
-      <Field heading={SECTION.modifications}>
-        {values.modifications.trim() || "None."}
-      </Field>
-
-      <p className="avoid-break">{template.signingStatement}</p>
-
-      <SignatureTable party1={values.party1} party2={values.party2} />
-
-      <div className="mt-8 text-xs">
-        <ReactMarkdown>{template.attribution}</ReactMarkdown>
-      </div>
+      <p className="mt-8 text-xs">
+        <Runs runs={agreement.attribution} />
+      </p>
 
       <Divider>Standard Terms</Divider>
 
-      <ReactMarkdown>{standardTerms}</ReactMarkdown>
+      <ol>
+        {agreement.clauses.map((clause, index) => (
+          <li key={index}>
+            <Runs runs={clause} />
+          </li>
+        ))}
+      </ol>
+
+      <p className="text-xs">
+        <Runs runs={agreement.standardTermsFooter} />
+      </p>
     </article>
+  );
+}
+
+function Runs({ runs }: { runs: TextRun[] }) {
+  return (
+    <>
+      {runs.map((run, index) => {
+        if (run.href) {
+          return (
+            <a key={index} href={run.href}>
+              {run.text}
+            </a>
+          );
+        }
+        return run.bold ? <strong key={index}>{run.text}</strong> : run.text;
+      })}
+    </>
   );
 }
 
@@ -79,21 +79,6 @@ function Divider({ children }: { children: ReactNode }) {
     <div className="mt-10 mb-6 border-t border-slate-300 pt-6">
       <h2 className="text-center">{children}</h2>
     </div>
-  );
-}
-
-function Field({
-  heading,
-  children,
-}: {
-  heading: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className="avoid-break">
-      <h2>{heading}</h2>
-      <p className="whitespace-pre-line">{children}</p>
-    </section>
   );
 }
 
@@ -111,20 +96,7 @@ function Value({ text }: { text: string }) {
   );
 }
 
-function SignatureTable({ party1, party2 }: { party1: Party; party2: Party }) {
-  // Signature and Date are always left empty — they are signed by hand.
-  const rows: { label: string; values: [string, string]; tall?: boolean }[] = [
-    { label: "Signature", values: ["", ""], tall: true },
-    { label: "Print Name", values: [party1.name, party2.name] },
-    { label: "Title", values: [party1.title, party2.title] },
-    { label: "Company", values: [party1.company, party2.company] },
-    {
-      label: "Notice Address",
-      values: [party1.noticeAddress, party2.noticeAddress],
-    },
-    { label: "Date", values: ["", ""] },
-  ];
-
+function SignatureTable({ rows }: { rows: SignatureRow[] }) {
   return (
     <table className="w-full table-fixed border-collapse text-sm">
       <thead>
