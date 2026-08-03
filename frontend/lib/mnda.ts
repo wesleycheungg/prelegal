@@ -81,6 +81,18 @@ export function createDefaultValues(template: CoverPageTemplate): MndaValues {
 const BLANK = "______";
 
 /**
+ * Constrains a year count to a whole number of years.
+ *
+ * A number input's `min` is not enforced for typed input, and whatever it holds
+ * flows straight into the agreement's wording — "Expires -3 years from Effective
+ * Date." is not a term anyone can sign. Leading zeros go too, so a lone "0"
+ * becomes empty and renders as a blank to fill in rather than a void term.
+ */
+export function sanitizeYears(input: string): string {
+  return input.replace(/\D/g, "").replace(/^0+/, "");
+}
+
+/**
  * `"1"` becomes `"1 year"`, `"3"` becomes `"3 years"`.
  *
  * A cleared input yields a blank rather than an empty string, so the sentence

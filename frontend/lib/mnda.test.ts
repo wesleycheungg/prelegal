@@ -8,6 +8,7 @@ import {
   isComplete,
   resolveConfidentialityTerm,
   resolveMndaTerm,
+  sanitizeYears,
 } from "./mnda";
 import { loadFixtures, sampleValues } from "@/test/helpers";
 
@@ -47,6 +48,41 @@ describe("createDefaultValues", () => {
     const values = createDefaultValues(template);
     values.party1.name = "Ada";
     expect(values.party2.name).toBe("");
+  });
+});
+
+describe("sanitizeYears", () => {
+  it("keeps a whole number of years", () => {
+    expect(sanitizeYears("3")).toBe("3");
+    expect(sanitizeYears("18")).toBe("18");
+  });
+
+  it("rejects a negative term, which cannot be signed", () => {
+    // Without this the agreement reads "Expires -3 years from Effective Date."
+    expect(sanitizeYears("-3")).toBe("3");
+  });
+
+  it("rejects a fractional or exponent term", () => {
+    expect(sanitizeYears("1.5")).toBe("15");
+    expect(sanitizeYears("1e5")).toBe("15");
+  });
+
+  it("treats zero as unset, so it renders as a blank to fill in", () => {
+    expect(sanitizeYears("0")).toBe("");
+    expect(sanitizeYears("000")).toBe("");
+  });
+
+  it("drops leading zeros", () => {
+    expect(sanitizeYears("007")).toBe("7");
+  });
+
+  it("passes an empty field through", () => {
+    expect(sanitizeYears("")).toBe("");
+  });
+
+  it("strips stray characters", () => {
+    expect(sanitizeYears("2 years")).toBe("2");
+    expect(sanitizeYears("abc")).toBe("");
   });
 });
 

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 
@@ -130,6 +130,24 @@ describe("MndaForm", () => {
       await user.type(screen.getByLabelText("MNDA Term length"), "5");
 
       expect(onChange).toHaveBeenCalledWith({ mndaTermYears: "5" });
+    });
+
+    // fireEvent rather than userEvent: a number input silently swallows some of
+    // these before they reach the handler, and the point is to prove the form
+    // sanitises whatever value it is handed.
+    it.each([
+      ["-3", "3", "a negative term cannot be signed"],
+      ["1.5", "15", "a term is whole years"],
+      ["0", "", "a zero-year term is void, so it counts as unset"],
+      ["007", "7", "leading zeros are noise"],
+    ])("sanitises %o to %o because %s", (typed, expected) => {
+      const { onChange } = renderForm(sampleValues({ mndaTermYears: "" }));
+
+      fireEvent.change(screen.getByLabelText("MNDA Term length"), {
+        target: { value: typed },
+      });
+
+      expect(onChange).toHaveBeenCalledWith({ mndaTermYears: expected });
     });
 
     it("selects the fixed option when the year count is focused", async () => {

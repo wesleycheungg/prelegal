@@ -59,8 +59,9 @@ Because the templates are parsed rather than restated, the form's help text, its
 radio button wording and the suggested purpose all come from the markdown. Edit
 a template and the app follows.
 
-Everything outside `lib/templates.ts` is pure and free of React and Node APIs,
-so the same merge logic could back a server-side renderer later without change.
+Everything in `lib/` outside `lib/templates.ts` is pure and free of React and
+Node APIs, so the same merge logic could back a server-side renderer later
+without change.
 
 ### Downloading
 
@@ -93,5 +94,5 @@ prerenders to static HTML with no runtime file access. Two consequences:
 ## Scope
 
 This is the KAN-3 prototype. Values live in React state only — there is no
-persistence, no accounts and no server. The other eleven templates in
+persistence, no accounts and no server. The remaining ten templates in
 `catalog.json` are not wired up yet.

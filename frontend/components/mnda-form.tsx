@@ -10,7 +10,7 @@ import {
   placeholderUnit,
   splitAroundPlaceholder,
 } from "@/lib/cover-page-template";
-import type { MndaValues, Party } from "@/lib/mnda";
+import { type MndaValues, type Party, sanitizeYears } from "@/lib/mnda";
 
 const inputClass =
   "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-xs placeholder:text-slate-400 focus:border-slate-900 focus:outline-none";
@@ -163,23 +163,29 @@ function PartyGroup({
   );
 }
 
+/**
+ * A field's caption. Renders as a `<legend>` for the radio groups, which caption
+ * a fieldset rather than a single control, so both share one set of styles.
+ */
 function Label({
+  as: Caption = "label",
   htmlFor,
   label,
   hint,
 }: {
-  htmlFor: string;
+  as?: "label" | "legend";
+  htmlFor?: string;
   label: string;
   hint?: string | null;
 }) {
   return (
     <>
-      <label
+      <Caption
         htmlFor={htmlFor}
         className="block text-sm font-medium text-slate-800"
       >
         {label}
-      </label>
+      </Caption>
       {hint && <p className="mt-0.5 text-xs text-slate-500">{hint}</p>}
     </>
   );
@@ -287,19 +293,16 @@ function TermField({
   onYearsChange: (years: string) => void;
 }) {
   const name = useId();
-  const [withPlaceholder, without] = section?.choices ?? [];
+  if (!section) return null;
+
+  const [withPlaceholder, without] = section.choices;
   if (!withPlaceholder || !without) return null;
 
   const [before, after] = splitAroundPlaceholder(withPlaceholder);
 
   return (
     <fieldset>
-      <legend className="block text-sm font-medium text-slate-800">
-        {section?.heading}
-      </legend>
-      {section?.hint && (
-        <p className="mt-0.5 text-xs text-slate-500">{section.hint}</p>
-      )}
+      <Label as="legend" label={section.heading} hint={section.hint} />
 
       <div className="mt-2 space-y-2">
         <label className="flex gap-2 text-sm text-slate-700">
@@ -316,8 +319,8 @@ function TermField({
               type="number"
               min={1}
               value={years}
-              aria-label={`${section?.heading} length`}
-              onChange={(event) => onYearsChange(event.target.value)}
+              aria-label={`${section.heading} length`}
+              onChange={(event) => onYearsChange(sanitizeYears(event.target.value))}
               onFocus={() => onSelect(true)}
               className="mx-1 w-16 rounded border border-slate-300 px-1.5 py-0.5 text-sm"
             />
