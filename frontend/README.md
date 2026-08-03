@@ -16,6 +16,25 @@ Then open http://localhost:3000.
 
 Other scripts: `npm run build`, `npm start`, `npm run lint`.
 
+## Testing
+
+```bash
+npm test          # once
+npm run test:watch
+```
+
+Vitest, with pure logic and PDF rendering in Node and component tests in jsdom
+(opted into per file with a `@vitest-environment jsdom` docblock). Tests run
+against the real templates in `templates/` rather than inline fixtures — coping
+with those documents is the parser's whole job, and a fixture that drifted from
+them would test nothing.
+
+`components/mnda-pdf.test.tsx` renders a real PDF and reads the text back out of
+its content streams. That covers what the document *says*; it says nothing about
+how it *looks*. Layout, real browser downloads, printing and accessibility are
+covered by the checklist in [`docs/manual-testing.md`](docs/manual-testing.md),
+which also records the known gaps.
+
 ## How it works
 
 The agreement text is never duplicated in this app. `templates/` at the

@@ -9,7 +9,9 @@ import type { TextRun } from "@/lib/inline-markdown";
  */
 export function AgreementDocument({ agreement }: { agreement: Agreement }) {
   return (
-    <article className="document">
+    // Labelled so the finished document is a landmark a screen reader can jump
+    // to, separately from the form that drives it.
+    <article className="document" aria-label="Agreement">
       <h1>{agreement.title}</h1>
       <p>
         <Runs runs={agreement.intro} />
@@ -101,11 +103,17 @@ function SignatureTable({ rows }: { rows: SignatureRow[] }) {
     <table className="w-full table-fixed border-collapse text-sm">
       <thead>
         <tr>
-          <th className="w-40 border border-slate-400 px-3 py-2" />
-          <th className="border border-slate-400 px-3 py-2 text-center font-bold">
+          <td className="w-40 border border-slate-400 px-3 py-2" />
+          <th
+            scope="col"
+            className="border border-slate-400 px-3 py-2 text-center font-bold"
+          >
             PARTY 1
           </th>
-          <th className="border border-slate-400 px-3 py-2 text-center font-bold">
+          <th
+            scope="col"
+            className="border border-slate-400 px-3 py-2 text-center font-bold"
+          >
             PARTY 2
           </th>
         </tr>
@@ -113,7 +121,10 @@ function SignatureTable({ rows }: { rows: SignatureRow[] }) {
       <tbody>
         {rows.map(({ label, values, tall }) => (
           <tr key={label}>
-            <th className="border border-slate-400 px-3 py-2 text-left font-normal">
+            <th
+              scope="row"
+              className="border border-slate-400 px-3 py-2 text-left font-normal"
+            >
               {label}
             </th>
             {values.map((value, index) => (
