@@ -12,9 +12,15 @@ npm install
 npm run dev
 ```
 
-Then open http://localhost:3000.
+Then open http://localhost:3000. Nothing else needs to be running.
 
-Other scripts: `npm run build`, `npm start`, `npm run lint`.
+Other scripts: `npm run build`, `npm run lint`.
+
+`npm run build` writes plain files to `out/`, which the backend serves at
+http://localhost:8000 alongside the API — see [`backend/README.md`](../backend/README.md).
+`next.config.ts` sets `output: "export"`, so there is no Node server to start
+and `npm start` no longer applies. Nothing is given up by that: the page already
+prerendered to static HTML, because the templates are read at build time.
 
 ## Testing
 
@@ -93,6 +99,10 @@ prerenders to static HTML with no runtime file access. Two consequences:
 
 ## Scope
 
-This is the KAN-3 prototype. Values live in React state only — there is no
-persistence, no accounts and no server. The remaining ten templates in
+Values live in React state only — there is no persistence and no accounts, and
+this app makes no network requests. The remaining ten templates in
 `catalog.json` are not wired up yet.
+
+There is now a backend, but nothing here calls it: it serves these files and
+offers the templates and accounts that later work will need. See
+[`backend/README.md`](../backend/README.md).
