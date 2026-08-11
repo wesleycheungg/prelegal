@@ -161,7 +161,10 @@ function Divider({ children }: { children: string }) {
 
 function SignatureTable({ rows }: { rows: SignatureRow[] }) {
   return (
-    <View style={styles.table}>
+    // Kept whole: a row split from its PARTY 1 / PARTY 2 header would leave
+    // someone signing an unlabelled box. The table is far shorter than a page,
+    // so at worst it moves down to the next one.
+    <View style={styles.table} wrap={false}>
       <View style={[styles.row, { borderTopWidth: 1, borderTopColor: "#94a3b8" }]}>
         <View style={[styles.cell, styles.labelCell]}>
           <Text> </Text>

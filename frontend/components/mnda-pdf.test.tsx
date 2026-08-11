@@ -7,6 +7,7 @@ import type { CoverPageTemplate } from "@/lib/cover-page-template";
 import type { MndaValues } from "@/lib/mnda";
 import {
   countPdfPages,
+  extractPdfPages,
   extractPdfText,
   loadFixtures,
   sampleValues,
@@ -101,6 +102,19 @@ describe("MndaPdf", () => {
     expect(filled.text).toContain("PARTY 2");
     for (const row of ["Signature", "Print Name", "Title", "Company", "Date"]) {
       expect(filled.text, row).toContain(row);
+    }
+  });
+
+  it("keeps the signature block on a single page", () => {
+    // A row split from its PARTY 1 / PARTY 2 header would leave someone
+    // signing an unlabelled box, so the table must never break across pages.
+    const page = extractPdfPages(filled.pdf).find((text) =>
+      text.includes("PARTY 1"),
+    );
+
+    expect(page).toBeDefined();
+    for (const row of ["Signature", "Print Name", "Title", "Company", "Date"]) {
+      expect(page, row).toContain(row);
     }
   });
 

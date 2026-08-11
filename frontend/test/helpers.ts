@@ -63,13 +63,14 @@ export function sampleValues(overrides: Partial<MndaValues> = {}): MndaValues {
 }
 
 /**
- * Pulls the visible text out of a PDF.
+ * Pulls the visible text out of a PDF, one entry per page.
  *
  * react-pdf writes text as hex-encoded runs inside Flate-compressed content
- * streams, so this inflates every stream and decodes the `TJ` show-text
- * operators. Good enough to assert on content; it says nothing about layout.
+ * streams, and gives each page exactly one such stream, so inflating them in
+ * turn separates the pages. The streams appear in file order, which is not
+ * page order — this says *which* page something landed on, never which number.
  */
-export function extractPdfText(pdf: Buffer): string {
+export function extractPdfPages(pdf: Buffer): string[] {
   const pages: string[] = [];
 
   for (const match of pdf.toString("latin1").matchAll(/stream/g)) {
@@ -97,10 +98,18 @@ export function extractPdfText(pdf: Buffer): string {
         .join(""),
     );
 
-    if (runs.length) pages.push(runs.join(" "));
+    if (runs.length) pages.push(decodeWinAnsi(runs.join(" ")));
   }
 
-  return decodeWinAnsi(pages.join("\n"));
+  return pages;
+}
+
+/**
+ * The whole document's text. Good enough to assert on content; it says nothing
+ * about layout.
+ */
+export function extractPdfText(pdf: Buffer): string {
+  return extractPdfPages(pdf).join("\n");
 }
 
 /**

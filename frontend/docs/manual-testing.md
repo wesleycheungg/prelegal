@@ -60,7 +60,7 @@ This is the part no test performs.
 | 3a.2 | Signature table | All borders present and joined; no doubled or missing edges |
 | 3a.3 | Signature and Date rows | Tall enough to sign by hand |
 | 3a.4 | Column widths | Party columns equal; label column narrower |
-| 3a.5 | Page breaks | No heading orphaned at a page foot; no signature row split across pages |
+| 3a.5 | Page breaks | No heading orphaned at a page foot. The signature table moves whole to the next page rather than splitting — expect white space above it, not a broken table |
 | 3a.6 | Numbered clauses | 1–11, numbers aligned, text not overlapping the numbers |
 | 3a.7 | Long notice address | Wraps inside its cell rather than overflowing |
 | 3a.8 | Select text in the PDF | Text is selectable and copyable — not an image |
@@ -124,7 +124,8 @@ This is the part no test performs.
 
 ## Known gaps
 
-- **No automated visual regression.** Section 3a is the only guard on PDF layout.
+- **No automated visual regression.** Section 3a is the only guard on PDF layout,
+  apart from the signature block, which a test pins to a single page.
 - **No cross-browser automation.** Section 3 is manual by necessity.
 - **Characters outside Latin-1 are silently dropped from the PDF.** The built-in
   Times faces cover Latin-1 only, so CJK and similar scripts vanish with no
