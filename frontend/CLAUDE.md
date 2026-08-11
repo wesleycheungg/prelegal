@@ -25,8 +25,13 @@ When writing code to make calls to LLMs, use LiteLLM via OpenRouter to the `open
 There is an OPENROUTER_API_KEY in the .env file in the project root.
 
 Note that `openrouter/` is LiteLLM's provider prefix. Calling the OpenRouter API
-directly, the model is `openai/gpt-oss-120b`, and Cerebras is pinned with
-`"provider": {"only": ["cerebras"]}`.
+directly, the model is `openai/gpt-oss-120b`.
+
+The Cerebras skill uses `{"provider": {"order": ["cerebras"]}}`, which prefers
+Cerebras but lets OpenRouter fall back if it is unavailable. `"only"` would
+forbid the fallback. `"order"` is what the code uses; a fallback provider that
+handles Structured Outputs differently would fail to parse and return a 502,
+which is handled, rather than producing a document that is quietly wrong.
 
 ## Technical design
 

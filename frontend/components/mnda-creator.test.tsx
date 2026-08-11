@@ -62,7 +62,7 @@ const renderCreator = () =>
  */
 const renderForm = async () => {
   const rendered = renderCreator();
-  await userEvent.click(screen.getByRole("tab", { name: "form" }));
+  await userEvent.click(screen.getByRole("button", { name: "form" }));
   return rendered;
 };
 
@@ -130,13 +130,13 @@ describe("MndaCreator", () => {
     await renderForm();
 
     await user.type(screen.getByLabelText("Governing Law"), "Delaware");
-    await user.click(screen.getByRole("tab", { name: "chat" }));
+    await user.click(screen.getByRole("button", { name: "chat" }));
 
     expect(screen.getByRole("region", { name: "Chat" })).toBeInTheDocument();
     expect(screen.queryByLabelText("Governing Law")).not.toBeInTheDocument();
     expect(agreement().getByText(/Governing Law: ?Delaware/)).toBeInTheDocument();
 
-    await user.click(screen.getByRole("tab", { name: "form" }));
+    await user.click(screen.getByRole("button", { name: "form" }));
     expect(screen.getByLabelText("Governing Law")).toHaveValue("Delaware");
   });
 

@@ -122,6 +122,20 @@ def test_sends_the_template_and_the_current_values_to_the_model(
     assert "Delaware" in system["content"]
 
 
+def test_quotes_long_values_at_length_rather_than_in_full(
+    chat_client: TestClient, stub_completion
+) -> None:
+    # Values are resent every turn and the form accepts a purpose of any size,
+    # so a long one would otherwise be paid for again on every message.
+    stub = stub_completion()
+
+    _send(chat_client, purpose="x" * 10_000)
+
+    system = stub.calls[0]["messages"][0]["content"]
+    assert "x" * 400 in system
+    assert "x" * 500 not in system
+
+
 def test_never_lets_the_caller_supply_a_system_message(chat_client: TestClient) -> None:
     # The instruction not to draft clauses is the server's, and a client that
     # could add its own system turn could argue the model out of it.

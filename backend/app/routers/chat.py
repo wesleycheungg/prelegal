@@ -15,6 +15,7 @@ The conversation is not stored. The client sends the history and the values it
 holds with every turn, which keeps the server free of per-user state.
 """
 
+import json
 import logging
 import re
 from datetime import date
@@ -156,12 +157,30 @@ Set a field only when the latest message gives you its value or corrects it. \
 Leave everything else null; never restate what you already know."""
 
 
+# Long enough for any answer worth quoting back, short enough that the values
+# cannot become the expensive part of a request.
+VALUE_EXCERPT_CHARS = 400
+
+
 def _prompt(templates_dir: Path, values: ChatFields) -> str:
+    """
+    The instructions, followed by what is already settled.
+
+    Values are quoted at length rather than in full. They are resent every turn,
+    and the form will accept a purpose of any size, so a long one would
+    otherwise be paid for again on each message. The model only needs to know a
+    field is answered, not to read all of it back.
+    """
+    excerpts = {
+        key: value[:VALUE_EXCERPT_CHARS] if isinstance(value, str) else value
+        for key, value in values.model_dump().items()
+    }
+
     return (
         f"{_instructions(templates_dir)}\n\n"
-        "Already filled in, as JSON. A null is a question still to ask; "
-        "anything else is settled, so do not ask about it again unless they "
-        f"are correcting it:\n{values.model_dump_json(indent=2)}"
+        "Already filled in, as JSON, and possibly shortened. A null is a "
+        "question still to ask; anything else is settled, so do not ask about "
+        f"it again unless they are correcting it:\n{json.dumps(excerpts, indent=2)}"
     )
 
 

@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { MndaChat } from "./mnda-chat";
-import { sampleValues } from "@/test/helpers";
+import type { ChatFields } from "@/lib/chat";
+import { emptyChatFields, sampleValues } from "@/test/helpers";
 
 /**
  * The network is mocked at `lib/chat`, the module boundary, rather than at
@@ -26,29 +27,10 @@ const { backendIsReachable, sendMessage, ChatError } = await import("@/lib/chat"
 const reachable = vi.mocked(backendIsReachable);
 const send = vi.mocked(sendMessage);
 
-/** A reply that settled one field, since a bare reply settles nothing. */
-const replyWith = (reply: string, fields: Record<string, unknown> = {}) => ({
+/** A reply that settled whichever fields are given. */
+const replyWith = (reply: string, fields: Partial<ChatFields> = {}) => ({
   reply,
-  fields: {
-    purpose: null,
-    effective_date: null,
-    mnda_term_kind: null,
-    mnda_term_years: null,
-    confidentiality_kind: null,
-    confidentiality_years: null,
-    governing_law: null,
-    jurisdiction: null,
-    modifications: null,
-    party1_company: null,
-    party1_name: null,
-    party1_title: null,
-    party1_notice_address: null,
-    party2_company: null,
-    party2_name: null,
-    party2_title: null,
-    party2_notice_address: null,
-    ...fields,
-  },
+  fields: emptyChatFields(fields),
 });
 
 function setup(onValues = vi.fn()) {
@@ -91,9 +73,41 @@ describe("MndaChat", () => {
     await user.click(screen.getByRole("button", { name: "Send" }));
 
     await waitFor(() => expect(onValues).toHaveBeenCalled());
-    const values = onValues.mock.calls[0][0];
+    const values = onValues.mock.calls[0][0](sampleValues());
     expect(values.governingLaw).toBe("Delaware");
     expect(values.party1.company).toBe("Acme Inc.");
+  });
+
+  it("merges into the values as they are when the reply lands", async () => {
+    // A reply arrives a second or so after it was asked for, and the form is
+    // reachable throughout. Merging into the values captured at send time would
+    // throw away anything typed while waiting.
+    send.mockResolvedValue(replyWith("Noted.", { governing_law: "Delaware" }));
+    const { onValues, user } = setup();
+
+    await user.type(screen.getByLabelText("Message"), "Delaware law");
+    await user.click(screen.getByRole("button", { name: "Send" }));
+
+    await waitFor(() => expect(onValues).toHaveBeenCalled());
+    const editedMeanwhile = sampleValues({ jurisdiction: "typed while waiting" });
+    const values = onValues.mock.calls[0][0](editedMeanwhile);
+
+    expect(values.governingLaw).toBe("Delaware");
+    expect(values.jurisdiction).toBe("typed while waiting");
+  });
+
+  it("keeps the unanswered message in the transcript", async () => {
+    // Watching your own message vanish is worse than seeing it go unanswered.
+    send.mockRejectedValue(new ChatError("Nope."));
+    const { user } = setup();
+
+    await user.type(screen.getByLabelText("Message"), "Delaware law");
+    await user.click(screen.getByRole("button", { name: "Send" }));
+
+    await screen.findByRole("alert");
+    // Scoped to the transcript: the text is deliberately also back in the box.
+    const transcript = within(screen.getByRole("log", { name: "Conversation" }));
+    expect(transcript.getByText("Delaware law")).toBeInTheDocument();
   });
 
   it("lists what each turn filled in", async () => {

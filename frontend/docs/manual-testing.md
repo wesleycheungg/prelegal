@@ -138,7 +138,7 @@ Needs the backend: `scripts/start-mac.sh`, then http://localhost:8000.
 | 7.2 | `scripts/start-mac.sh`, then download from http://localhost:8000 | Works the same as in dev. There is no `npm start` — `output: "export"` leaves no server to run |
 | 7.3 | Open DevTools Network, load the page, then click Download | The PDF renderer is fetched only on click, not on load |
 | 7.4 | Build with `templates/` renamed away | Build fails with a clear error — confirms the documented coupling |
-| 7.5 | With the app served at :8000, open DevTools Network and use the form | No request to `/api/*`. The app is still entirely client-side |
+| 7.5 | With the app served at :8000, open DevTools Network, switch to Form and fill it in | One `GET /api/health` on load, from the chat pane, and nothing after it. The form, the preview and the download stay entirely client-side |
 
 ---
 

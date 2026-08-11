@@ -14,7 +14,14 @@ import type { MndaValues } from "@/lib/mnda";
 
 interface MndaChatProps {
   values: MndaValues;
-  onValues: (values: MndaValues) => void;
+  /**
+   * Takes a function of the current values rather than the values themselves.
+   *
+   * A reply arrives a second or so after it was asked for, and the form is
+   * reachable throughout. Merging into the values captured when the message was
+   * sent would throw away anything typed in the meantime.
+   */
+  onValues: (merge: (current: MndaValues) => MndaValues) => void;
 }
 
 /**
@@ -83,7 +90,7 @@ export function MndaChat({ values, onValues }: MndaChatProps) {
         .map(({ role, content }) => ({ role, content }));
 
       const { reply, fields } = await sendMessage(history, values);
-      onValues(applyFields(values, fields));
+      onValues((current) => applyFields(current, fields));
       setTurns([
         ...spoken,
         { role: "assistant", content: reply, filled: filledFieldNames(fields) },
@@ -94,11 +101,11 @@ export function MndaChat({ values, onValues }: MndaChatProps) {
           ? cause.message
           : "Something went wrong. Please try again.";
 
-      // The unanswered message goes back in the box rather than staying in the
-      // transcript, so sending again is one keystroke and the conversation is
-      // not left with a turn nobody replied to.
+      // The message stays in the transcript, because it was said and watching
+      // it disappear is worse than seeing it go unanswered. It also goes back
+      // in the box, so sending again does not mean typing it again.
       setDraft(message);
-      setTurns([...turns, { role: "assistant", content: explanation, failed: true }]);
+      setTurns([...spoken, { role: "assistant", content: explanation, failed: true }]);
     } finally {
       setBusy(false);
       composer.current?.focus();

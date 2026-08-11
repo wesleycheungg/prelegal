@@ -1,33 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  type ChatFields,
-  applyFields,
-  filledFieldNames,
-  toChatFields,
-} from "./chat";
-import { sampleValues } from "@/test/helpers";
+import { applyFields, filledFieldNames, toChatFields } from "./chat";
+import { emptyChatFields, sampleValues } from "@/test/helpers";
 
-/** A turn that settled nothing, to be overridden one field at a time. */
-const nothing = (): ChatFields => ({
-  purpose: null,
-  effective_date: null,
-  mnda_term_kind: null,
-  mnda_term_years: null,
-  confidentiality_kind: null,
-  confidentiality_years: null,
-  governing_law: null,
-  jurisdiction: null,
-  modifications: null,
-  party1_company: null,
-  party1_name: null,
-  party1_title: null,
-  party1_notice_address: null,
-  party2_company: null,
-  party2_name: null,
-  party2_title: null,
-  party2_notice_address: null,
-});
 
 describe("toChatFields", () => {
   it("sends what the user has already given", () => {
@@ -51,7 +26,7 @@ describe("applyFields", () => {
   it("writes in what the turn settled", () => {
     const values = applyFields(
       sampleValues({ governingLaw: "" }),
-      { ...nothing(), governing_law: "Delaware" },
+      { ...emptyChatFields(), governing_law: "Delaware" },
     );
 
     expect(values.governingLaw).toBe("Delaware");
@@ -60,7 +35,7 @@ describe("applyFields", () => {
   it("leaves everything the turn said nothing about", () => {
     const before = sampleValues();
 
-    const after = applyFields(before, { ...nothing(), purpose: "A new purpose." });
+    const after = applyFields(before, { ...emptyChatFields(), purpose: "A new purpose." });
 
     expect(after.purpose).toBe("A new purpose.");
     expect(after.governingLaw).toBe(before.governingLaw);
@@ -72,7 +47,7 @@ describe("applyFields", () => {
     // would wipe the name and title to set the company.
     const before = sampleValues();
 
-    const after = applyFields(before, { ...nothing(), party1_company: "Initech" });
+    const after = applyFields(before, { ...emptyChatFields(), party1_company: "Initech" });
 
     expect(after.party1.company).toBe("Initech");
     expect(after.party1.name).toBe(before.party1.name);
@@ -83,7 +58,7 @@ describe("applyFields", () => {
   it("does not touch the other party", () => {
     const before = sampleValues();
 
-    const after = applyFields(before, { ...nothing(), party1_company: "Initech" });
+    const after = applyFields(before, { ...emptyChatFields(), party1_company: "Initech" });
 
     expect(after.party2).toEqual(before.party2);
   });
@@ -97,7 +72,7 @@ describe("applyFields", () => {
     // The backend sanitises too. This is the last gate before the value reaches
     // the document, and "Expires -3 years from Effective Date." is not signable.
     const values = applyFields(sampleValues(), {
-      ...nothing(),
+      ...emptyChatFields(),
       mnda_term_years: given,
     });
 
@@ -106,7 +81,7 @@ describe("applyFields", () => {
 
   it("accepts a term the assistant chose from the template", () => {
     const values = applyFields(sampleValues(), {
-      ...nothing(),
+      ...emptyChatFields(),
       mnda_term_kind: "untilTerminated",
     });
 
@@ -117,7 +92,7 @@ describe("applyFields", () => {
 describe("filledFieldNames", () => {
   it("names what was filled in", () => {
     const names = filledFieldNames({
-      ...nothing(),
+      ...emptyChatFields(),
       governing_law: "Delaware",
       party1_company: "Acme Inc.",
     });
@@ -127,7 +102,7 @@ describe("filledFieldNames", () => {
 
   it("names a term once, though it is two fields", () => {
     const names = filledFieldNames({
-      ...nothing(),
+      ...emptyChatFields(),
       mnda_term_kind: "fixed",
       mnda_term_years: "2",
     });
@@ -136,6 +111,6 @@ describe("filledFieldNames", () => {
   });
 
   it("says nothing when a turn settled nothing", () => {
-    expect(filledFieldNames(nothing())).toEqual([]);
+    expect(filledFieldNames(emptyChatFields())).toEqual([]);
   });
 });

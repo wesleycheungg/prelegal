@@ -116,13 +116,18 @@ export function MndaCreator({ template, standardTerms }: MndaCreatorProps) {
 
       <main className="workspace mx-auto grid w-full max-w-[1600px] flex-1 gap-8 px-6 py-8 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-start">
         <div className="no-print flex flex-col gap-4 lg:sticky lg:top-8 lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto lg:pr-2">
-          <div role="tablist" aria-label="How to fill in the agreement" className="flex gap-1 rounded-lg bg-slate-100 p-1">
+          {/*
+            Two buttons rather than a tablist. `role="tab"` announces a widget
+            the arrow keys move through, and building that for a choice of two
+            would be machinery for its own sake; `aria-pressed` describes what
+            these actually are and how they actually behave.
+          */}
+          <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
             {(["chat", "form"] as const).map((option) => (
               <button
                 key={option}
                 type="button"
-                role="tab"
-                aria-selected={mode === option}
+                aria-pressed={mode === option}
                 onClick={() => setMode(option)}
                 className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 ${
                   mode === option
