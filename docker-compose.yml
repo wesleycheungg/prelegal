@@ -1,0 +1,18 @@
+# One service, because the frontend is static files the backend serves rather
+# than a process of its own.
+#
+#   docker compose up --build     start
+#   docker compose down           stop
+
+services:
+  prelegal:
+    build: .
+    ports:
+      - "8000:8000"
+    # Optional: absent, the backend falls back to a per-process secret and an
+    # unset OPENROUTER_API_KEY, which is enough to run the foundation.
+    env_file:
+      - path: .env
+        required: false
+    # Deliberately no volumes. The database is meant to be discarded when the
+    # container stops; mounting it would defeat the point.

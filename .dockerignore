@@ -1,0 +1,23 @@
+# Build artefacts and local state. The image builds the frontend itself and
+# installs the backend from uv.lock, so copying either in would only risk
+# shipping something stale or platform-specific.
+**/node_modules
+**/.venv
+**/__pycache__
+frontend/.next
+frontend/out
+backend/data
+
+# Local run state from scripts/
+.run
+
+# Secrets are passed at run time, never baked into a layer.
+.env
+.env.*
+
+.git
+.gitignore
+.claude
+**/*.db
+**/.pytest_cache
+**/.ruff_cache
