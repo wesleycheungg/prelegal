@@ -11,6 +11,7 @@ restart, and worth revisiting once accounts outlive the process.
 and raises `AttributeError` against bcrypt 4.1 and later.
 """
 
+import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -19,9 +20,15 @@ import jwt
 
 ALGORITHM = "HS256"
 
-# bcrypt truncates silently at 72 bytes, so a longer password would be accepted
-# at signup and then match any other password sharing its first 72 bytes.
+# bcrypt refuses a password longer than this, counted in UTF-8 bytes rather than
+# characters — 72 emoji are 288 bytes. Callers must reject an over-long password
+# themselves; reaching `hash_password` with one is a 500.
 MAX_PASSWORD_BYTES = 72
+
+
+def is_hashable_password(password: str) -> bool:
+    """Whether bcrypt will accept this password rather than raising."""
+    return len(password.encode()) <= MAX_PASSWORD_BYTES
 
 
 def hash_password(password: str) -> str:
@@ -30,15 +37,22 @@ def hash_password(password: str) -> str:
 
 def verify_password(password: str, password_hash: str) -> bool:
     """
-    Check a password, returning False rather than raising on a malformed hash.
+    Check a password, returning False rather than raising.
 
-    A stored hash that bcrypt cannot parse means a corrupt row, not a correct
-    password, and a sign-in attempt should not become a 500 either way.
+    A stored hash bcrypt cannot parse means a corrupt row, and a password too
+    long for bcrypt cannot be the one that was stored. Neither is a correct
+    password, and neither should turn a sign-in attempt into a 500.
     """
     try:
         return bcrypt.checkpw(password.encode(), password_hash.encode())
     except ValueError:
         return False
+
+
+# Compared against when no user matches, so that sign-in takes about as long
+# whether or not the address is registered. Without it, the fast path gives away
+# which addresses exist, however carefully the replies are kept identical.
+ABSENT_USER_HASH = hash_password(secrets.token_urlsafe(16))
 
 
 def create_session_token(user_id: int, secret_key: str, max_age_seconds: int) -> str:

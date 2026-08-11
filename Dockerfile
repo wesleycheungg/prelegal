@@ -43,6 +43,9 @@ COPY --from=frontend /app/frontend/out /app/frontend/out
 # see app/db.py. Anything a user creates is gone when the container stops.
 EXPOSE 8000
 
+# The virtualenv's uvicorn rather than `uv run`, so the server is PID 1 and
+# receives `docker stop`'s SIGTERM directly instead of through a wrapper.
+#
 # No --workers: the database is rebuilt by a startup hook in-process, and two
 # workers would race to delete and recreate the same file.
-CMD ["uv", "run", "--no-dev", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

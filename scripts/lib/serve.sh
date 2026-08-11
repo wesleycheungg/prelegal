@@ -63,10 +63,14 @@ start_server() {
   echo "Starting the server..."
   (
     cd backend
-    # `uv run` execs uvicorn, so the recorded pid is the server itself and
-    # stopping it leaves no orphan. No --reload for the same reason: it forks a
-    # watcher, and the pid would then name the wrong process.
-    nohup uv run uvicorn app.main:app --host 0.0.0.0 --port "$PORT" \
+    # The virtualenv's uvicorn, not `uv run uvicorn`. `uv run` stays alive as a
+    # parent rather than exec'ing, so the recorded pid would be the wrapper's:
+    # it forwards SIGTERM, but not the SIGKILL that stop_server escalates to,
+    # which would leave the real server orphaned and still holding the port.
+    # `uv sync` above has just guaranteed this binary exists.
+    #
+    # No --reload either, for the same reason: it forks a watcher.
+    nohup .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port "$PORT" \
       >"$LOG_FILE" 2>&1 &
     echo $! >"$PID_FILE"
   )

@@ -69,7 +69,8 @@ def get_template(slug: str, settings: SettingsDep) -> dict[str, Any]:
             status_code=status.HTTP_404_NOT_FOUND, detail=f"No template '{slug}'"
         )
 
-    # Resolved from the catalog's own filename, so a template can only be read
-    # if the catalog already lists it — the slug never reaches the filesystem.
-    path = settings.templates_dir.parent / entry["filename"]
+    # Resolved from the catalog's own filename, which is relative to the
+    # repository root. A template can only be read if the catalog already lists
+    # it, so the slug never reaches the filesystem.
+    path = settings.repo_root / entry["filename"]
     return {**entry, "content": path.read_text(encoding="utf-8")}

@@ -13,14 +13,16 @@ import sqlite3
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Response, status
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from app import db
 from app.deps import ConnectionDep, CurrentUserDep, SettingsDep
 from app.security import (
+    ABSENT_USER_HASH,
     MAX_PASSWORD_BYTES,
     create_session_token,
     hash_password,
+    is_hashable_password,
     verify_password,
 )
 
@@ -29,9 +31,25 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 class Credentials(BaseModel):
     email: EmailStr
-    # The lower bound is a floor, not a policy; the upper bound is bcrypt's own
-    # limit, beyond which it ignores the remaining bytes.
-    password: str = Field(min_length=8, max_length=MAX_PASSWORD_BYTES)
+    # A floor, not a policy. The ceiling is checked below instead of with
+    # `max_length`, which counts characters.
+    password: str = Field(min_length=8)
+
+    @field_validator("password")
+    @classmethod
+    def within_bcrypt_limit(cls, password: str) -> str:
+        """
+        Reject a password bcrypt would refuse, so it is a 422 and not a 500.
+
+        The limit is in bytes, and `max_length` counts characters: 72 emoji pass
+        a character check and are 288 bytes.
+        """
+        if not is_hashable_password(password):
+            raise ValueError(
+                f"Password must be at most {MAX_PASSWORD_BYTES} bytes; "
+                "accented and non-Latin characters take more than one each."
+            )
+        return password
 
 
 class UserPublic(BaseModel):
@@ -91,8 +109,14 @@ def signin(
     user = db.find_user_by_email(connection, credentials.email)
 
     # One message for an unknown address and for a wrong password, so the reply
-    # cannot be used to find out which addresses are registered.
-    if user is None or not verify_password(credentials.password, user["password_hash"]):
+    # cannot be used to find out which addresses are registered. The hash is
+    # checked even when there is no user, so the time taken cannot either.
+    correct = verify_password(
+        credentials.password,
+        user["password_hash"] if user else ABSENT_USER_HASH,
+    )
+
+    if user is None or not correct:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",

@@ -6,6 +6,8 @@ saved documents will hang off, and because they are what proves the database is
 built and usable rather than merely present.
 """
 
+import time
+
 from fastapi.testclient import TestClient
 
 from app.config import Settings
@@ -66,6 +68,24 @@ def test_signup_rejects_a_password_too_short_to_be_worth_hashing(
     assert response.status_code == 422
 
 
+def test_signup_rejects_a_password_bcrypt_would_refuse(client: TestClient) -> None:
+    # 72 emoji are 72 characters and 288 bytes. bcrypt raises above 72 bytes, so
+    # checking the character count would turn this into a 500.
+    response = client.post(
+        "/api/auth/signup", json={"email": "ada@example.com", "password": "😀" * 72}
+    )
+
+    assert response.status_code == 422
+
+
+def test_signup_accepts_a_long_password_that_still_fits(client: TestClient) -> None:
+    response = client.post(
+        "/api/auth/signup", json={"email": "ada@example.com", "password": "a" * 72}
+    )
+
+    assert response.status_code == 201
+
+
 def test_signup_rejects_something_that_is_not_an_email(client: TestClient) -> None:
     response = client.post(
         "/api/auth/signup", json={"email": "not-an-email", "password": PASSWORD}
@@ -112,6 +132,28 @@ def test_signin_says_the_same_thing_for_an_unknown_email(client: TestClient) -> 
     assert unknown.json() == wrong.json()
 
 
+def test_signin_takes_similar_time_whether_or_not_the_email_exists(
+    signed_in: TestClient,
+) -> None:
+    # Identical replies are not enough on their own: skipping the hash when no
+    # user matches makes that path measurably faster, which enumerates
+    # registered addresses just as well as a different message would.
+    def elapsed(email: str) -> float:
+        start = time.perf_counter()
+        signed_in.post(
+            "/api/auth/signin", json={"email": email, "password": "wrong-password"}
+        )
+        return time.perf_counter() - start
+
+    known = min(elapsed("ada@example.com") for _ in range(3))
+    unknown = min(elapsed("nobody@example.com") for _ in range(3))
+
+    # Generous, because timing on a loaded machine is noisy. The failure this
+    # guards against is the unknown path skipping bcrypt entirely, which makes
+    # it faster by an order of magnitude rather than by a factor of three.
+    assert unknown > known / 3
+
+
 def test_signout_clears_the_session(signed_in: TestClient) -> None:
     assert signed_in.post("/api/auth/signout").status_code == 204
 
@@ -140,11 +182,14 @@ def test_me_refuses_a_token_signed_with_another_key(client: TestClient) -> None:
 
 
 def test_me_refuses_a_token_naming_a_user_who_no_longer_exists(
-    client: TestClient,
+    client: TestClient, settings: Settings
 ) -> None:
     # The everyday case, not an exotic one: the database is rebuilt on every
     # restart while the cookie in the browser survives it.
-    orphaned = create_session_token(999, "test-secret-key-long-enough-for-sha256", 3600)
+    #
+    # Signed with the server's own key, so this fails for the reason intended
+    # rather than because the signature did not check out.
+    orphaned = create_session_token(999, settings.secret_key, 3600)
     client.cookies.set("prelegal_session", orphaned)
 
     assert client.get("/api/auth/me").status_code == 401

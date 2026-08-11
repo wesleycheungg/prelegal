@@ -35,8 +35,18 @@ def reset_database(database_path: Path) -> None:
 
 
 def connect(database_path: Path) -> sqlite3.Connection:
-    """Open a connection whose rows can be read by column name."""
-    connection = sqlite3.connect(database_path)
+    """
+    Open a connection whose rows can be read by column name.
+
+    `check_same_thread` is off because FastAPI runs synchronous endpoints in a
+    thread pool that hands out whichever worker is free, so the thread that
+    opens a connection is usually not the one that queries it or commits it.
+    Leaving the check on means most requests fail with "SQLite objects created
+    in a thread can only be used in that same thread" the moment two arrive at
+    once. Turning it off is safe here only because `session` gives every request
+    a connection of its own — no connection is ever shared.
+    """
+    connection = sqlite3.connect(database_path, check_same_thread=False)
     connection.row_factory = sqlite3.Row
     # Off by default in SQLite, and the users table has no foreign keys yet, but
     # a connection that ignores them is a trap for the tables that follow.

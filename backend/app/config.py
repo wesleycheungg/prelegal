@@ -34,6 +34,9 @@ class Settings(BaseSettings):
 
     # Where the agreement markdown and its index live. The templates are the
     # single source of truth for wording, so the API reads them in place.
+    # `catalog.json` names its files relative to the repository root, so that
+    # root is a setting too rather than something recomputed from the others.
+    repo_root: Path = REPO_ROOT
     templates_dir: Path = REPO_ROOT / "templates"
     catalog_path: Path = REPO_ROOT / "catalog.json"
 
