@@ -79,12 +79,18 @@ exists; if something is not listed, it has not been built.
   SQLite rebuilt from scratch on every start, start/stop scripts for Mac, Linux
   and Windows, and Docker packaging. The frontend became a static export that
   the backend serves, so everything is one origin on port 8000.
+- **KAN-5** — the AI chat, Mutual NDA only. `POST /api/chat` holds the
+  conversation and returns both a reply and whatever that turn settled about the
+  fields; the chat pane is what opens, with the form kept behind a toggle for
+  correcting it. LiteLLM via OpenRouter to Cerebras, with Structured Outputs.
+  The model populates values and never wording — it picks between the
+  template's own term sentences rather than writing one — and what it returns
+  is validated before it can reach a document anyone might sign.
 
 ### Not built yet
 
-AI chat (KAN-5, in progress), the other ten document types, saved documents, and
-any sign-in interface. The auth endpoints below exist but nothing in the product
-calls them.
+The other ten document types, saved documents, and any sign-in interface. The
+auth endpoints below exist but nothing in the product calls them.
 
 ### API endpoints
 
@@ -95,6 +101,7 @@ calls them.
 - `POST /api/auth/signin` — sign in, setting an HttpOnly session cookie
 - `POST /api/auth/signout` — clear the cookie
 - `GET /api/auth/me` — the signed-in user, or 401
+- `POST /api/chat` — one turn of the conversation, with the fields it settled
 
 Interactive docs are at http://localhost:8000/api/docs.
 
@@ -104,7 +111,7 @@ Interactive docs are at http://localhost:8000/api/docs.
 | --- | --- |
 | `frontend/lib/` | Pure logic: template parsing, the agreement model, wording. |
 | `frontend/components/` | React. `mnda-creator.tsx` owns the state. |
-| `backend/app/routers/` | `health`, `templates`, `auth`. |
+| `backend/app/routers/` | `health`, `templates`, `auth`, `chat`. |
 | `backend/app/db.py` | Connections, queries, and rebuilding the database. |
 | `scripts/lib/serve.sh` | Start and stop, shared by Mac and Linux. |
 

@@ -55,8 +55,10 @@ templates, and the page reads them directly:
 | `lib/mnda.ts` | The user's values, and the functions turning them into cover page wording. Pure. |
 | `lib/standard-terms.ts` | Prepares the Standard Terms for rendering. Pure. |
 | `lib/agreement.ts` | Builds the finished agreement as a display-independent model. Pure. |
+| `lib/chat.ts` | Talks to the assistant, and writes what it settles into the values. |
 | `app/page.tsx` | Server Component: reads and parses the templates, hands them to the client. |
-| `components/mnda-creator.tsx` | Owns the values; form beside live preview. |
+| `components/mnda-creator.tsx` | Owns the values; chat or form beside live preview. |
+| `components/mnda-chat.tsx` | The conversation that fills the agreement in. |
 | `components/mnda-form.tsx` | The input fields. Labels and hints come from the template. |
 | `components/agreement-document.tsx` | Renders the agreement model to HTML. |
 | `components/mnda-pdf.tsx` | Renders the same model to PDF. |
@@ -99,10 +101,10 @@ prerenders to static HTML with no runtime file access. Two consequences:
 
 ## Scope
 
-Values live in React state only — there is no persistence and no accounts, and
-this app makes no network requests. The remaining ten templates in
-`catalog.json` are not wired up yet.
+Values live in React state only — there is no persistence and no accounts. The
+remaining ten templates in `catalog.json` are not wired up yet.
 
-There is now a backend, but nothing here calls it: it serves these files and
-offers the templates and accounts that later work will need. See
+The chat is the one part of this app that talks to the backend, through
+`lib/chat.ts`. Everything else still runs entirely in the browser, so the form,
+the preview and the download all work with no server. See
 [`backend/README.md`](../backend/README.md).
