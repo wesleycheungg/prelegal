@@ -13,6 +13,15 @@ import { loadFixtures } from "@/test/helpers";
 const toBlob = vi.fn(async () => new Blob(["%PDF-1.3"], { type: "application/pdf" }));
 const pdf = vi.fn(() => ({ toBlob }));
 
+// The chat pane checks whether the backend is up when it mounts. These tests
+// are about the form and the download, so that check is stubbed out rather than
+// left to whatever a relative fetch does in this environment.
+vi.mock("@/lib/chat", async () => ({
+  ...(await vi.importActual<typeof import("@/lib/chat")>("@/lib/chat")),
+  backendIsReachable: vi.fn(async () => true),
+  sendMessage: vi.fn(),
+}));
+
 vi.mock("@react-pdf/renderer", () => ({
   pdf,
   // Referenced by `mnda-pdf.tsx`, which is imported alongside the renderer.
@@ -44,21 +53,34 @@ afterEach(() => {
 const renderCreator = () =>
   render(<MndaCreator template={template} standardTerms={standardTerms} />);
 
+/**
+ * Renders with the form showing.
+ *
+ * Chat is what opens by default; these tests are about the form driving the
+ * document, which is a path that has to keep working whether or not anyone
+ * talks to the assistant.
+ */
+const renderForm = async () => {
+  const rendered = renderCreator();
+  await userEvent.click(screen.getByRole("tab", { name: "form" }));
+  return rendered;
+};
+
 /** Scopes a query to the rendered agreement, away from the form's own wording. */
 const agreement = () => within(screen.getByRole("article", { name: "Agreement" }));
 
 describe("MndaCreator", () => {
-  it("shows the form and the document side by side", () => {
+  it("opens with the chat beside the document", () => {
     renderCreator();
-    expect(screen.getByRole("group", { name: "Agreement" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Chat" })).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { level: 1, name: "Mutual NDA Creator" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Cover Page" })).toBeInTheDocument();
   });
 
-  it("starts from the template's suggested purpose", () => {
-    renderCreator();
+  it("starts from the template's suggested purpose", async () => {
+    await renderForm();
     expect(screen.getByLabelText("Purpose")).toHaveValue(
       "Evaluating whether to enter into a business relationship with the other party.",
     );
@@ -66,7 +88,7 @@ describe("MndaCreator", () => {
 
   it("updates the document as the user types", async () => {
     const user = userEvent.setup();
-    renderCreator();
+    await renderForm();
 
     await user.type(screen.getByLabelText("Governing Law"), "Delaware");
 
@@ -75,7 +97,7 @@ describe("MndaCreator", () => {
 
   it("reflects a changed term in the document immediately", async () => {
     const user = userEvent.setup();
-    renderCreator();
+    await renderForm();
 
     expect(
       agreement().getByText("Expires 1 year from Effective Date."),
@@ -92,13 +114,30 @@ describe("MndaCreator", () => {
 
   it("copies a party's company into the signature table", async () => {
     const user = userEvent.setup();
-    renderCreator();
+    await renderForm();
 
     const party1 = screen.getByRole("group", { name: "Party 1" });
     await user.type(within(party1).getByLabelText("Company"), "Acme Inc.");
 
     const row = screen.getByRole("rowheader", { name: "Company" }).closest("tr")!;
     expect(within(row).getAllByRole("cell")[0]).toHaveTextContent("Acme Inc.");
+  });
+
+  it("carries what the form was given back to the chat and on to the document", async () => {
+    // The two are ways into one set of values. If they held separate state,
+    // switching would quietly lose whatever the other had gathered.
+    const user = userEvent.setup();
+    await renderForm();
+
+    await user.type(screen.getByLabelText("Governing Law"), "Delaware");
+    await user.click(screen.getByRole("tab", { name: "chat" }));
+
+    expect(screen.getByRole("region", { name: "Chat" })).toBeInTheDocument();
+    expect(screen.queryByLabelText("Governing Law")).not.toBeInTheDocument();
+    expect(agreement().getByText(/Governing Law: ?Delaware/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: "form" }));
+    expect(screen.getByLabelText("Governing Law")).toHaveValue("Delaware");
   });
 
   it("warns while details are still blank", () => {
@@ -114,7 +153,7 @@ describe("MndaCreator", () => {
       const click = vi
         .spyOn(HTMLAnchorElement.prototype, "click")
         .mockImplementation(() => {});
-      renderCreator();
+      await renderForm();
 
       const party1 = screen.getByRole("group", { name: "Party 1" });
       const party2 = screen.getByRole("group", { name: "Party 2" });
