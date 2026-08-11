@@ -105,6 +105,9 @@ blob-report/
 # Logs
 logs/
 *.log
+
+# The pid file and log that scripts/start-*.sh keep while the server is up.
+.run/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
