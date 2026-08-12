@@ -17,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import Settings, get_settings
 from app.db import reset_database
-from app.routers import auth, health, templates
+from app.routers import auth, chat, health, templates
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +68,7 @@ def _create_api(settings: Settings) -> FastAPI:
     api.include_router(health.router)
     api.include_router(templates.router)
     api.include_router(auth.router)
+    api.include_router(chat.router)
 
     # Sub-applications do not inherit the parent's overrides, so tests reach
     # this one through the same object the parent was built with.

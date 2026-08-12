@@ -6,6 +6,7 @@ import {
   type CoverPageTemplate,
   parseCoverPageTemplate,
 } from "@/lib/cover-page-template";
+import type { ChatFields } from "@/lib/chat";
 import type { MndaValues } from "@/lib/mnda";
 import { prepareStandardTerms } from "@/lib/standard-terms";
 import { TEMPLATE_FILE, readTemplate } from "@/lib/templates";
@@ -134,4 +135,33 @@ function decodeWinAnsi(text: string): string {
 /** Counts `/Type /Page` entries, tolerating either spacing. */
 export function countPdfPages(pdf: Buffer): number {
   return [...pdf.toString("latin1").matchAll(/\/Type\s*\/Page[^s]/g)].length;
+}
+
+/**
+ * A turn that settled nothing, to be overridden one field at a time.
+ *
+ * Shared because it is the full field list written out, and two copies of that
+ * would be two things to keep in step with the backend's own schema.
+ */
+export function emptyChatFields(overrides: Partial<ChatFields> = {}): ChatFields {
+  return {
+    purpose: null,
+    effective_date: null,
+    mnda_term_kind: null,
+    mnda_term_years: null,
+    confidentiality_kind: null,
+    confidentiality_years: null,
+    governing_law: null,
+    jurisdiction: null,
+    modifications: null,
+    party1_company: null,
+    party1_name: null,
+    party1_title: null,
+    party1_notice_address: null,
+    party2_company: null,
+    party2_name: null,
+    party2_title: null,
+    party2_notice_address: null,
+    ...overrides,
+  };
 }

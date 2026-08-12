@@ -7,6 +7,7 @@ dependencies = [
     "bcrypt>=5.0.0",
     "email-validator>=2.3.0",
     "fastapi>=0.121.0",
+    "litellm>=1.96.2",
     "pydantic-settings>=2.13.0",
     "pyjwt>=2.10.1",
     "uvicorn[standard]>=0.41.0",
@@ -28,3 +29,7 @@ select = ["E", "F", "I", "B", "UP"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# The live tests call the real model, which costs money and needs the network.
+# Run them deliberately with `uv run pytest -m live`.
+addopts = "-m 'not live'"
+markers = ["live: calls the real language model"]

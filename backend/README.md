@@ -49,6 +49,7 @@ from `schema.sql` would test nothing. They read the real `templates/` and
 | `app/routers/health.py` | `GET /api/health`, polled by the start scripts. |
 | `app/routers/templates.py` | The agreement templates and the catalog. |
 | `app/routers/auth.py` | Sign up, sign in, sign out, who am I. |
+| `app/routers/chat.py` | The assistant that fills in the agreement. |
 
 ### The database is temporary
 
@@ -81,12 +82,32 @@ router so that it keeps its own error handling. A missing template returns a
 JSON 404 from inside the API; an unknown path outside it returns the frontend's
 own 404 page.
 
+### The assistant
+
+`app/routers/chat.py` is the whole chat feature, Mutual NDA only. It holds the
+conversation, and returns both a reply and whatever that turn settled about the
+agreement's fields.
+
+It populates values, never wording. The finished document says only what the
+template says, so the model chooses between the template's own two term
+sentences rather than writing one; there is nowhere in its schema to put a
+sentence of its own. Whatever it does return is checked before it leaves —
+a date that is not ISO, or a term of "-3" years, is dropped rather than passed
+on to a document someone may sign.
+
+The conversation is not stored. The client sends the history and its values
+every turn, which keeps this server free of per-user state.
+
+Tests run against a stub. `tests/test_chat_live.py` is the one that calls the
+real model, and it is excluded from the default run:
+
+```bash
+uv run pytest -m live
+```
+
 ## Scope
 
-The foundation for V1, not a feature. Nothing in the product calls any of this
-yet: the frontend still reads the templates directly when it is built, and there
-is no interface for signing in.
-
-The templates and auth endpoints exist because they are what the AI chat and
-saved documents will need, and because they make the database something the
-tests actually exercise rather than merely create.
+Still no persistence and no sign-in interface: the auth endpoints exist but
+nothing in the product calls them. The frontend reads the templates directly
+when it is built, and the chat is the only part of the product that talks to
+this server at all.

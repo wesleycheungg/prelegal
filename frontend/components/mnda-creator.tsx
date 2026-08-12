@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import { AgreementDocument } from "./agreement-document";
+import { MndaChat } from "./mnda-chat";
 import { MndaForm } from "./mnda-form";
 import { agreementFileName, buildAgreement } from "@/lib/agreement";
 import type { CoverPageTemplate } from "@/lib/cover-page-template";
@@ -14,14 +15,23 @@ interface MndaCreatorProps {
   standardTerms: string;
 }
 
+/** Chat is where a user starts; the form is there to correct and to fall back on. */
+type Mode = "chat" | "form";
+
 /**
- * Owns the agreement's values and lays the tool out as a form beside a live
- * preview of the document it produces.
+ * Owns the agreement's values and lays the tool out beside a live preview of
+ * the document it produces.
+ *
+ * The chat and the form are two ways into the same values, so anything settled
+ * in conversation can be corrected in the form and the other way about. Keeping
+ * both means the assistant misreading something is never a dead end, and there
+ * is still a way through without it.
  */
 export function MndaCreator({ template, standardTerms }: MndaCreatorProps) {
   const [values, setValues] = useState<MndaValues>(() =>
     createDefaultValues(template),
   );
+  const [mode, setMode] = useState<Mode>("chat");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,7 +87,7 @@ export function MndaCreator({ template, standardTerms }: MndaCreatorProps) {
               Mutual NDA Creator
             </h1>
             <p className="text-sm text-slate-500">
-              Fill in the details and download a complete agreement.
+              Talk it through and download a complete agreement.
             </p>
           </div>
 
@@ -105,8 +115,36 @@ export function MndaCreator({ template, standardTerms }: MndaCreatorProps) {
       </header>
 
       <main className="workspace mx-auto grid w-full max-w-[1600px] flex-1 gap-8 px-6 py-8 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-start">
-        <div className="no-print lg:sticky lg:top-8 lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto lg:pr-2">
-          <MndaForm template={template} values={values} onChange={update} />
+        <div className="no-print flex flex-col gap-4 lg:sticky lg:top-8 lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto lg:pr-2">
+          {/*
+            Two buttons rather than a tablist. `role="tab"` announces a widget
+            the arrow keys move through, and building that for a choice of two
+            would be machinery for its own sake; `aria-pressed` describes what
+            these actually are and how they actually behave.
+          */}
+          <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
+            {(["chat", "form"] as const).map((option) => (
+              <button
+                key={option}
+                type="button"
+                aria-pressed={mode === option}
+                onClick={() => setMode(option)}
+                className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 ${
+                  mode === option
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+
+          {mode === "chat" ? (
+            <MndaChat values={values} onValues={setValues} />
+          ) : (
+            <MndaForm template={template} values={values} onChange={update} />
+          )}
         </div>
 
         <div className="paper rounded-lg border border-slate-200 bg-white p-8 shadow-sm sm:p-12">

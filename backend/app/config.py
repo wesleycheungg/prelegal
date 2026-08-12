@@ -60,9 +60,18 @@ class Settings(BaseSettings):
     # plain-HTTP localhost, where a Secure cookie would simply be dropped.
     session_cookie_secure: bool = False
 
-    # Unused until the AI chat lands, and read now only so that a missing key is
-    # discovered by configuration rather than by a failing request later.
+    # The AI chat. Without a key the chat endpoint reports itself unconfigured
+    # rather than failing at the point of use; everything else still runs.
     openrouter_api_key: str = ""
+
+    # Every turn resends the whole conversation, so the cost of a request grows
+    # with its length. These bound what one request can spend: a long
+    # conversation is refused rather than quietly becoming expensive, and a
+    # runaway client cannot run up a bill one enormous request at a time.
+    chat_max_messages: int = 40
+    chat_max_message_chars: int = 4000
+    chat_max_tokens: int = 800
+    chat_timeout_seconds: int = 30
 
 
 @lru_cache

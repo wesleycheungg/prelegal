@@ -76,6 +76,25 @@ This is the part no test performs.
 | 3b.1 | Press ⌘P / Ctrl+P | Preview shows the agreement only — no header, no form, no buttons |
 | 3b.2 | Check the print preview | Margins sensible, nothing clipped at the edges |
 
+## 3c. The chat
+
+Needs the backend: `scripts/start-mac.sh`, then http://localhost:8000.
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 3c.1 | Load the page | Chat pane on the left with a greeting; no request was made to load it |
+| 3c.2 | "An NDA between Acme Inc. and Globex Ltd." | Reply names both; chips list Party 1 and Party 2 Company; both appear in the signature table |
+| 3c.3 | "Two years, Delaware law, courts in New Castle DE" | Term reads "Expires 2 years from Effective Date." — the template's sentence, not the assistant's |
+| 3c.4 | "Effective 3 August 2026" | Document shows `August 3, 2026`. The assistant converts to ISO; a date it cannot parse is dropped rather than shown wrong |
+| 3c.5 | "Make it run until we terminate it" | Term switches to the template's second sentence |
+| 3c.6 | "Add a clause capping liability at $1m" | Declines, says it needs a lawyer, and **nothing about it appears in the document** |
+| 3c.7 | Switch to Form | Everything the chat gathered is in the fields |
+| 3c.8 | Change Governing Law in the form, switch back to Chat | The change holds, and the document shows it |
+| 3c.9 | Download PDF after a chat | Same document as the preview |
+| 3c.10 | Stop the backend, send a message | An error bubble appears and the message returns to the box; the document is untouched |
+| 3c.11 | `npm run dev` on :3000, load the page | Chat shows the "needs the backend running" notice; the Form toggle still works |
+| 3c.12 | Send with Enter; Shift+Enter | Enter sends, Shift+Enter starts a new line |
+
 ## 4. Responsive layout
 
 | # | Step | Expected |
@@ -119,7 +138,7 @@ This is the part no test performs.
 | 7.2 | `scripts/start-mac.sh`, then download from http://localhost:8000 | Works the same as in dev. There is no `npm start` — `output: "export"` leaves no server to run |
 | 7.3 | Open DevTools Network, load the page, then click Download | The PDF renderer is fetched only on click, not on load |
 | 7.4 | Build with `templates/` renamed away | Build fails with a clear error — confirms the documented coupling |
-| 7.5 | With the app served at :8000, open DevTools Network and use the form | No request to `/api/*`. The app is still entirely client-side |
+| 7.5 | With the app served at :8000, open DevTools Network, switch to Form and fill it in | One `GET /api/health` on load, from the chat pane, and nothing after it. The form, the preview and the download stay entirely client-side |
 
 ---
 
