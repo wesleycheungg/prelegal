@@ -118,11 +118,12 @@ exists; if something is not listed, it has not been built.
   the form, the preview and the download all still work signed out, and with the
   backend down.
 
-All six are merged to `main` and marked Done in Jira.
+All six are merged to `main`. KAN-2 to KAN-6 are marked Done in Jira; KAN-7 is
+built and merged but still reads To Do there.
 
 ### Not built yet
 
-No tickets remain. What a next one would most likely want:
+Nothing on the board is unbuilt. What a next ticket would most likely want:
 
 - **Documents that outlive a restart.** `reset_database` wipes everything on
   every start, which the tickets asked for. Changing it means `schema.sql` stops
@@ -196,10 +197,15 @@ losing a field quietly.
 ## Testing
 
 ```bash
-cd frontend && npm test          # 288 tests
+cd frontend && npm test          # 291 tests
 cd backend  && uv run pytest     # 111 tests
 cd backend  && uv run pytest -m live   # 6 more; calls the real model, costs money
 ```
+
+`tests/test_concurrency.py` boots a real uvicorn on a free port and waits on a
+health check. It has been seen to time out when run immediately after
+`npm run build`, with the machine still busy — contention rather than a real
+failure, and it passes on its own.
 
 The live tests are excluded by default and skip themselves without an API key.
 They are the only thing that can catch the model being retired, the provider
