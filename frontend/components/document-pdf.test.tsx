@@ -1,10 +1,11 @@
 import { renderToBuffer } from "@react-pdf/renderer";
 import { beforeAll, describe, expect, it } from "vitest";
 
-import { MndaPdf } from "./mnda-pdf";
+import { AgreementPdf } from "./document-pdf";
 import { buildAgreement } from "@/lib/agreement";
-import type { CoverPageTemplate } from "@/lib/cover-page-template";
-import type { MndaValues } from "@/lib/mnda";
+import { createDefaultValues } from "@/lib/document-values";
+import type { DocumentValues } from "@/lib/document-values";
+import type { DocumentDefinition } from "@/lib/templates";
 import {
   countPdfPages,
   extractPdfPages,
@@ -21,17 +22,18 @@ import {
  * `docs/manual-testing.md`.
  */
 
-let template: CoverPageTemplate;
-let standardTerms: string;
+let mnda: DocumentDefinition;
 let filled: { pdf: Buffer; text: string };
 
-const renderPdf = async (values: MndaValues) =>
+const renderPdf = async (values: DocumentValues) =>
   renderToBuffer(
-    <MndaPdf agreement={buildAgreement(template, values, standardTerms)} />,
+    <AgreementPdf
+      agreement={buildAgreement(mnda.schema, values, mnda.standardTerms)}
+    />,
   );
 
 beforeAll(async () => {
-  ({ template, standardTerms } = await loadFixtures());
+  mnda = await loadFixtures();
   const pdf = await renderPdf(sampleValues());
   filled = { pdf, text: extractPdfText(pdf) };
 }, 60_000);
@@ -157,7 +159,9 @@ describe("MndaPdf", () => {
 
   it("writes a rule to sign on where a detail is missing", async () => {
     const text = extractPdfText(
-      await renderPdf(sampleValues({ governingLaw: "", jurisdiction: "" })),
+      await renderPdf(
+        sampleValues({ fields: { governing_law: "", jurisdiction: "" } }),
+      ),
     );
     expect(text).toContain("______");
   });
@@ -170,8 +174,10 @@ describe("MndaPdf", () => {
     const text = extractPdfText(
       await renderPdf(
         sampleValues({
-          mndaTermKind: "untilTerminated",
-          confidentialityKind: "perpetual",
+          choices: {
+            mnda_term: { index: 1, number: "2" },
+            term_of_confidentiality: { index: 1, number: "3" },
+          },
         }),
       ),
     );
@@ -182,15 +188,9 @@ describe("MndaPdf", () => {
   });
 
   it("renders an agreement with nothing filled in", async () => {
-    const pdf = await renderPdf({
-      ...sampleValues(),
-      purpose: "",
-      effectiveDate: "",
-      governingLaw: "",
-      jurisdiction: "",
-      party1: { name: "", title: "", company: "", noticeAddress: "" },
-      party2: { name: "", title: "", company: "", noticeAddress: "" },
-    });
+    const pdf = await renderPdf(
+      createDefaultValues((await loadFixtures()).schema),
+    );
 
     expect(pdf.subarray(0, 5).toString()).toBe("%PDF-");
     expect(extractPdfText(pdf)).toContain("Mutual Non-Disclosure Agreement");
@@ -202,7 +202,11 @@ describe("MndaPdf", () => {
     // vanish from the PDF without any error. Supporting them means embedding a
     // font. See `docs/manual-testing.md`.
     const text = extractPdfText(
-      await renderPdf(sampleValues({ purpose: "Evaluating Ünïcode and 株式会社." })),
+      await renderPdf(
+        sampleValues({
+          fields: { purpose: "Evaluating Ünïcode and 株式会社." },
+        }),
+      ),
     );
 
     expect(text).toContain("Ünïcode");
@@ -212,8 +216,10 @@ describe("MndaPdf", () => {
   it("survives values long enough to wrap and paginate", async () => {
     const pdf = await renderPdf(
       sampleValues({
-        purpose: "Evaluating a partnership. ".repeat(200),
-        modifications: "Clause amended. ".repeat(200),
+        fields: {
+          purpose: "Evaluating a partnership. ".repeat(200),
+          mnda_modifications: "Clause amended. ".repeat(200),
+        },
       }),
     );
 

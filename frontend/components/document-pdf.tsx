@@ -78,12 +78,12 @@ const styles = StyleSheet.create({
   headerCell: { fontFamily: "Times-Bold", textAlign: "center" },
 });
 
-export function MndaPdf({ agreement }: { agreement: Agreement }) {
+export function AgreementPdf({ agreement }: { agreement: Agreement }) {
   return (
     <Document
       title={agreement.title}
       author="Prelegal"
-      subject="Mutual Non-Disclosure Agreement"
+      subject={agreement.title}
     >
       <Page size="LETTER" style={styles.page}>
         <Text style={styles.title}>{agreement.title}</Text>
@@ -108,7 +108,10 @@ export function MndaPdf({ agreement }: { agreement: Agreement }) {
 
         <Text style={styles.paragraph}>{agreement.signingStatement}</Text>
 
-        <SignatureTable rows={agreement.signatureRows} />
+        <SignatureTable
+          rows={agreement.signatureRows}
+          partyRoles={agreement.partyRoles}
+        />
 
         <Text style={[styles.paragraph, styles.small, { marginTop: 14 }]}>
           <Runs runs={agreement.attribution} />
@@ -159,17 +162,25 @@ function Divider({ children }: { children: string }) {
   );
 }
 
-function SignatureTable({ rows }: { rows: SignatureRow[] }) {
+function SignatureTable({
+  rows,
+  partyRoles,
+}: {
+  rows: SignatureRow[];
+  partyRoles: [string, string];
+}) {
   return (
-    // Kept whole: a row split from its PARTY 1 / PARTY 2 header would leave
-    // someone signing an unlabelled box. The table is far shorter than a page,
-    // so at worst it moves down to the next one.
+    // Kept whole: a row split from its party header would leave someone signing
+    // an unlabelled box. The table is far shorter than a page, so at worst it
+    // moves down to the next one.
     <View style={styles.table} wrap={false}>
-      <View style={[styles.row, { borderTopWidth: 1, borderTopColor: "#94a3b8" }]}>
+      <View
+        style={[styles.row, { borderTopWidth: 1, borderTopColor: "#94a3b8" }]}
+      >
         <View style={[styles.cell, styles.labelCell]}>
           <Text> </Text>
         </View>
-        {["PARTY 1", "PARTY 2"].map((party) => (
+        {partyRoles.map((party) => (
           <View key={party} style={[styles.cell, styles.partyCell]}>
             <Text style={styles.headerCell}>{party}</Text>
           </View>
@@ -184,7 +195,11 @@ function SignatureTable({ rows }: { rows: SignatureRow[] }) {
           {values.map((value, index) => (
             <View
               key={index}
-              style={[styles.cell, styles.partyCell, { minHeight: tall ? 40 : 24 }]}
+              style={[
+                styles.cell,
+                styles.partyCell,
+                { minHeight: tall ? 40 : 24 },
+              ]}
             >
               <Text>{value}</Text>
             </View>
