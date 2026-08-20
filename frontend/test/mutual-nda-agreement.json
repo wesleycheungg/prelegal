@@ -1,0 +1,349 @@
+{
+  "title": "Mutual Non-Disclosure Agreement",
+  "intro": [
+    {
+      "text": "This Mutual Non-Disclosure Agreement (the “MNDA”) consists of: (1) this Cover Page (“"
+    },
+    {
+      "text": "Cover Page",
+      "bold": true
+    },
+    {
+      "text": "”) and (2) the Common Paper Mutual NDA Standard Terms Version 1.0 (“"
+    },
+    {
+      "text": "Standard Terms",
+      "bold": true
+    },
+    {
+      "text": "”) identical to those posted at "
+    },
+    {
+      "text": "commonpaper.com/standards/mutual-nda/1.0",
+      "href": "https://commonpaper.com/standards/mutual-nda/1.0"
+    },
+    {
+      "text": ". Any modifications of the Standard Terms should be made on the Cover Page, which will control over conflicts with the Standard Terms."
+    }
+  ],
+  "fields": [
+    {
+      "heading": "Purpose",
+      "lines": [
+        {
+          "value": "Evaluating a potential partnership."
+        }
+      ]
+    },
+    {
+      "heading": "Effective Date",
+      "lines": [
+        {
+          "value": "August 3, 2026"
+        }
+      ]
+    },
+    {
+      "heading": "MNDA Term",
+      "lines": [
+        {
+          "value": "Expires 2 years from Effective Date."
+        }
+      ]
+    },
+    {
+      "heading": "Term of Confidentiality",
+      "lines": [
+        {
+          "value": "3 years from Effective Date, but in the case of trade secrets until Confidential Information is no longer considered a trade secret under applicable laws."
+        }
+      ]
+    },
+    {
+      "heading": "Governing Law & Jurisdiction",
+      "lines": [
+        {
+          "label": "Governing Law",
+          "value": "Delaware"
+        },
+        {
+          "label": "Jurisdiction",
+          "value": "courts located in New Castle, DE"
+        }
+      ]
+    },
+    {
+      "heading": "MNDA Modifications",
+      "lines": [
+        {
+          "value": "None."
+        }
+      ]
+    }
+  ],
+  "signingStatement": "By signing this Cover Page, each party agrees to enter into this MNDA as of the Effective Date.",
+  "signatureRows": [
+    {
+      "label": "Signature",
+      "values": ["", ""],
+      "tall": true
+    },
+    {
+      "label": "Print Name",
+      "values": ["Ada Lovelace", "Alan Turing"]
+    },
+    {
+      "label": "Title",
+      "values": ["CEO", "General Counsel"]
+    },
+    {
+      "label": "Company",
+      "values": ["Acme Inc.", "Globex Ltd."]
+    },
+    {
+      "label": "Notice Address",
+      "values": ["legal@acme.example", "1 Globex Way\nLondon"]
+    },
+    {
+      "label": "Date",
+      "values": ["", ""]
+    }
+  ],
+  "attribution": [
+    {
+      "text": "Common Paper Mutual Non-Disclosure Agreement (Version 1.0) free to use under "
+    },
+    {
+      "text": "CC BY 4.0",
+      "href": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    {
+      "text": "."
+    }
+  ],
+  "clauses": [
+    [
+      {
+        "text": "Introduction",
+        "bold": true
+      },
+      {
+        "text": ". This Mutual Non-Disclosure Agreement (which incorporates these Standard Terms and the Cover Page (defined below)) (“"
+      },
+      {
+        "text": "MNDA",
+        "bold": true
+      },
+      {
+        "text": "”) allows each party (“"
+      },
+      {
+        "text": "Disclosing Party",
+        "bold": true
+      },
+      {
+        "text": "”) to disclose or make available information in connection with the "
+      },
+      {
+        "text": "Purpose",
+        "bold": true
+      },
+      {
+        "text": " which (1) the Disclosing Party identifies to the receiving party (“"
+      },
+      {
+        "text": "Receiving Party",
+        "bold": true
+      },
+      {
+        "text": "”) as “confidential”, “proprietary”, or the like or (2) should be reasonably understood as confidential or proprietary due to its nature and the circumstances of its disclosure (“"
+      },
+      {
+        "text": "Confidential Information",
+        "bold": true
+      },
+      {
+        "text": "”). Each party’s Confidential Information also includes the existence and status of the parties’ discussions and information on the Cover Page. Confidential Information includes technical or business information, product designs or roadmaps, requirements, pricing, security and compliance documentation, technology, inventions and know-how. To use this MNDA, the parties must complete and sign a cover page incorporating these Standard Terms (“"
+      },
+      {
+        "text": "Cover Page",
+        "bold": true
+      },
+      {
+        "text": "”). Each party is identified on the Cover Page and capitalized terms have the meanings given herein or on the Cover Page."
+      }
+    ],
+    [
+      {
+        "text": "Use and Protection of Confidential Information",
+        "bold": true
+      },
+      {
+        "text": ". The Receiving Party shall: (a) use Confidential Information solely for the "
+      },
+      {
+        "text": "Purpose",
+        "bold": true
+      },
+      {
+        "text": "; (b) not disclose Confidential Information to third parties without the Disclosing Party’s prior written approval, except that the Receiving Party may disclose Confidential Information to its employees, agents, advisors, contractors and other representatives having a reasonable need to know for the "
+      },
+      {
+        "text": "Purpose",
+        "bold": true
+      },
+      {
+        "text": ", provided these representatives are bound by confidentiality obligations no less protective of the Disclosing Party than the applicable terms in this MNDA and the Receiving Party remains responsible for their compliance with this MNDA; and (c) protect Confidential Information using at least the same protections the Receiving Party uses for its own similar information but no less than a reasonable standard of care."
+      }
+    ],
+    [
+      {
+        "text": "Exceptions",
+        "bold": true
+      },
+      {
+        "text": ". The Receiving Party’s obligations in this MNDA do not apply to information that it can demonstrate: (a) is or becomes publicly available through no fault of the Receiving Party; (b) it rightfully knew or possessed prior to receipt from the Disclosing Party without confidentiality restrictions; (c) it rightfully obtained from a third party without confidentiality restrictions; or (d) it independently developed without using or referencing the Confidential Information."
+      }
+    ],
+    [
+      {
+        "text": "Disclosures Required by Law",
+        "bold": true
+      },
+      {
+        "text": ". The Receiving Party may disclose Confidential Information to the extent required by law, regulation or regulatory authority, subpoena or court order, provided (to the extent legally permitted) it provides the Disclosing Party reasonable advance notice of the required disclosure and reasonably cooperates, at the Disclosing Party’s expense, with the Disclosing Party’s efforts to obtain confidential treatment for the Confidential Information."
+      }
+    ],
+    [
+      {
+        "text": "Term and Termination",
+        "bold": true
+      },
+      {
+        "text": ". This MNDA commences on the "
+      },
+      {
+        "text": "Effective Date",
+        "bold": true
+      },
+      {
+        "text": " and expires at the end of the "
+      },
+      {
+        "text": "MNDA Term",
+        "bold": true
+      },
+      {
+        "text": ". Either party may terminate this MNDA for any or no reason upon written notice to the other party. The Receiving Party’s obligations relating to Confidential Information will survive for the "
+      },
+      {
+        "text": "Term of Confidentiality",
+        "bold": true
+      },
+      {
+        "text": ", despite any expiration or termination of this MNDA."
+      }
+    ],
+    [
+      {
+        "text": "Return or Destruction of Confidential Information",
+        "bold": true
+      },
+      {
+        "text": ". Upon expiration or termination of this MNDA or upon the Disclosing Party’s earlier request, the Receiving Party will: (a) cease using Confidential Information; (b) promptly after the Disclosing Party’s written request, destroy all Confidential Information in the Receiving Party’s possession or control or return it to the Disclosing Party; and (c) if requested by the Disclosing Party, confirm its compliance with these obligations in writing. As an exception to subsection (b), the Receiving Party may retain Confidential Information in accordance with its standard backup or record retention policies or as required by law, but the terms of this MNDA will continue to apply to the retained Confidential Information."
+      }
+    ],
+    [
+      {
+        "text": "Proprietary Rights",
+        "bold": true
+      },
+      {
+        "text": ". The Disclosing Party retains all of its intellectual property and other rights in its Confidential Information and its disclosure to the Receiving Party grants no license under such rights."
+      }
+    ],
+    [
+      {
+        "text": "Disclaimer",
+        "bold": true
+      },
+      {
+        "text": ". ALL CONFIDENTIAL INFORMATION IS PROVIDED “AS IS”, WITH ALL FAULTS, AND WITHOUT WARRANTIES, INCLUDING THE IMPLIED WARRANTIES OF TITLE, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE."
+      }
+    ],
+    [
+      {
+        "text": "Governing Law and Jurisdiction",
+        "bold": true
+      },
+      {
+        "text": ". This MNDA and all matters relating hereto are governed by, and construed in accordance with, the laws of the State of "
+      },
+      {
+        "text": "Governing Law",
+        "bold": true
+      },
+      {
+        "text": ", without regard to the conflict of laws provisions of such "
+      },
+      {
+        "text": "Governing Law",
+        "bold": true
+      },
+      {
+        "text": ". Any legal suit, action, or proceeding relating to this MNDA must be instituted in the federal or state courts located in "
+      },
+      {
+        "text": "Jurisdiction",
+        "bold": true
+      },
+      {
+        "text": ". Each party irrevocably submits to the exclusive jurisdiction of such "
+      },
+      {
+        "text": "Jurisdiction",
+        "bold": true
+      },
+      {
+        "text": " in any such suit, action, or proceeding."
+      }
+    ],
+    [
+      {
+        "text": "Equitable Relief",
+        "bold": true
+      },
+      {
+        "text": ". A breach of this MNDA may cause irreparable harm for which monetary damages are an insufficient remedy. Upon a breach of this MNDA, the Disclosing Party is entitled to seek appropriate equitable relief, including an injunction, in addition to its other remedies."
+      }
+    ],
+    [
+      {
+        "text": "General",
+        "bold": true
+      },
+      {
+        "text": ". Neither party has an obligation under this MNDA to disclose Confidential Information to the other or proceed with any proposed transaction. Neither party may assign this MNDA without the prior written consent of the other party, except that either party may assign this MNDA in connection with a merger, reorganization, acquisition or other transfer of all or substantially all its assets or voting securities. Any assignment in violation of this Section is null and void. This MNDA will bind and inure to the benefit of each party’s permitted successors and assigns. Waivers must be signed by the waiving party’s authorized representative and cannot be implied from conduct. If any provision of this MNDA is held unenforceable, it will be limited to the minimum extent necessary so the rest of this MNDA remains in effect. This MNDA (including the Cover Page) constitutes the entire agreement of the parties with respect to its subject matter, and supersedes all prior and contemporaneous understandings, agreements, representations, and warranties, whether written or oral, regarding such subject matter. This MNDA may only be amended, modified, waived, or supplemented by an agreement in writing signed by both parties. Notices, requests and approvals under this MNDA must be sent in writing to the email or postal addresses on the Cover Page and are deemed delivered on receipt. This MNDA may be executed in counterparts, including electronic copies, each of which is deemed an original and which together form the same agreement."
+      }
+    ]
+  ],
+  "standardTermsFooter": [
+    {
+      "text": "Common Paper Mutual Non-Disclosure Agreement "
+    },
+    {
+      "text": "Version 1.0",
+      "href": "https://commonpaper.com/standards/mutual-nda/1.0/"
+    },
+    {
+      "text": " free to use under "
+    },
+    {
+      "text": "CC BY 4.0",
+      "href": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    {
+      "text": "."
+    }
+  ]
+}

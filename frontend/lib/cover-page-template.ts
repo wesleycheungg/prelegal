@@ -1,14 +1,17 @@
 /**
- * Parser for `templates/mutual-nda-cover-page.md`.
+ * Parser for the cover pages in `templates/`.
  *
- * The Common Paper cover page is a fill-in-the-blanks document: headings mark
- * the fields, `<label>` tags describe them, `- [ ]` lines offer alternative
- * wordings, and `[bracketed text]` marks the parts a user replaces. Rather than
+ * A Common Paper cover page is a fill-in-the-blanks document: headings mark
+ * the fields, `<label>` tags describe them, `<optional/>` marks a field the
+ * agreement can be signed without, `- [ ]` lines offer alternative wordings,
+ * and `[bracketed text]` marks the parts a user replaces. Rather than
  * duplicating that prose in the app, we parse it out and let the template stay
  * the single source of truth for the legal wording.
  *
- * Pure and dependency-free so it can run at build time, in the browser, or in a
- * future backend without change.
+ * This is the grammar layer and it knows nothing about any particular
+ * document: which sections exist, and what each one means, is `field-schema`'s
+ * job. Pure and dependency-free so it can run at build time, in the browser, or
+ * in a future backend without change.
  */
 
 /** A `### Heading` block of the cover page. */
@@ -19,38 +22,49 @@ export interface CoverPageSection {
   hint: string | null;
   /** `- [ ]` alternatives in source order, with `[placeholders]` left intact. */
   choices: string[];
-  /** Remaining prose, with hint and choice lines removed. */
+  /** Remaining prose, with hint, choice and marker lines removed. */
   body: string;
+  /**
+   * Whether the agreement needs this field to be usable.
+   *
+   * True unless the section carries an `<optional/>` marker, so a cover page
+   * that says nothing asks for everything — the safer default for a document
+   * someone signs.
+   */
+  required: boolean;
 }
 
 export interface CoverPageTemplate {
   /** Document title, from the leading `#` heading. */
   title: string;
-  /** The paragraph explaining what the MNDA consists of. Markdown. */
+  /** The paragraph explaining what the agreement consists of. Markdown. */
   intro: string;
-  /** Sections keyed by heading. */
+  /** Sections in source order, keyed by heading. */
   sections: Record<string, CoverPageSection>;
   /** The "By signing this Cover Page..." sentence. */
   signingStatement: string;
   /** Common Paper's CC BY attribution line. Markdown. Required by the licence. */
   attribution: string;
+  /**
+   * What the two signing parties are called, from the signature table's header.
+   *
+   * Documents name them differently — Provider and Customer, Provider and
+   * Partner, Company and Provider — and calling both sides "Party 1" would be
+   * wrong on all but the Mutual NDA.
+   */
+  partyRoles: [string, string];
 }
 
-/** Headings this app knows how to fill in. */
-export const SECTION = {
-  purpose: "Purpose",
-  effectiveDate: "Effective Date",
-  mndaTerm: "MNDA Term",
-  confidentiality: "Term of Confidentiality",
-  governingLaw: "Governing Law & Jurisdiction",
-  modifications: "MNDA Modifications",
-} as const;
-
 const SIGNING_STATEMENT = /^By signing this Cover Page.*$/m;
-const ATTRIBUTION = /^Common Paper Mutual Non-Disclosure Agreement.*$/m;
+const ATTRIBUTION = /^Common Paper .*free to use under \[CC BY 4\.0\].*$/m;
 const LABEL = /^<label>(.*)<\/label>$/;
+const OPTIONAL = /^<optional\s*\/>$/;
 const CHOICE = /^-\s+\[[ xX]\]\s+(.*)$/;
 const HEADING = /^(#{1,3})\s+(.*)$/;
+/** The signature table's header row, e.g. `|| PARTY 1 | PARTY 2 |`. */
+const PARTY_ROLES = /^\|\|\s*(.+?)\s*\|\s*(.+?)\s*\|?$/;
+
+const DEFAULT_PARTY_ROLES: [string, string] = ["Party 1", "Party 2"];
 
 /**
  * A `[bracketed]` fill-in marker.
@@ -77,10 +91,15 @@ export function fillPlaceholder(text: string, value: string): string {
  * Splits text either side of its `[bracketed]` marker so the form can render an
  * input where the marker sits, keeping the sentence readable around it.
  */
-export function splitAroundPlaceholder(text: string): [before: string, after: string] {
+export function splitAroundPlaceholder(
+  text: string,
+): [before: string, after: string] {
   const match = PLACEHOLDER.exec(text);
   if (!match) return [text, ""];
-  return [text.slice(0, match.index), text.slice(match.index + match[0].length)];
+  return [
+    text.slice(0, match.index),
+    text.slice(match.index + match[0].length),
+  ];
 }
 
 /**
@@ -100,10 +119,16 @@ export function parseCoverPageTemplate(markdown: string): CoverPageTemplate {
   const introLines: string[] = [];
   const sections: Record<string, CoverPageSection> = {};
   let current: CoverPageSection | null = null;
+  let partyRoles: [string, string] | null = null;
   const bodyLines: string[] = [];
 
   const flush = () => {
     if (current) {
+      // Sections are keyed by heading, so a repeat would overwrite the first
+      // and quietly drop a field somebody could have filled in.
+      if (current.heading in sections) {
+        throw new Error(`Two sections both headed "${current.heading}"`);
+      }
       current.body = bodyLines.join("\n").trim();
       sections[current.heading] = current;
       bodyLines.length = 0;
@@ -118,7 +143,13 @@ export function parseCoverPageTemplate(markdown: string): CoverPageTemplate {
         title = text;
       } else if (hashes === "###") {
         flush();
-        current = { heading: text, hint: null, choices: [], body: "" };
+        current = {
+          heading: text,
+          hint: null,
+          choices: [],
+          body: "",
+          required: true,
+        };
       }
       // `##` is the "USING THIS..." banner, which the intro paragraph follows.
       continue;
@@ -132,6 +163,10 @@ export function parseCoverPageTemplate(markdown: string): CoverPageTemplate {
       (signingStatement !== "" && line === signingStatement) ||
       (attribution !== "" && line === attribution)
     ) {
+      // The header row names the parties; the rest of the table is rebuilt by
+      // `buildAgreement`, which needs the row labels but not this markup.
+      const roles = PARTY_ROLES.exec(line);
+      if (roles && !partyRoles) partyRoles = [roles[1], roles[2]];
       continue;
     }
 
@@ -143,6 +178,11 @@ export function parseCoverPageTemplate(markdown: string): CoverPageTemplate {
     const label = LABEL.exec(line.trim());
     if (label) {
       current.hint = label[1];
+      continue;
+    }
+
+    if (OPTIONAL.test(line.trim())) {
+      current.required = false;
       continue;
     }
 
@@ -162,5 +202,6 @@ export function parseCoverPageTemplate(markdown: string): CoverPageTemplate {
     sections,
     signingStatement,
     attribution,
+    partyRoles: partyRoles ?? DEFAULT_PARTY_ROLES,
   };
 }

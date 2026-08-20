@@ -1,0 +1,1027 @@
+{
+  "ai-addendum": {
+    "title": "AI Addendum",
+    "party_roles": [
+      "PROVIDER",
+      "CUSTOMER"
+    ],
+    "fields": [
+      {
+        "key": "effective_date",
+        "kind": "date",
+        "label": "Effective Date",
+        "required": true,
+        "wire_keys": [
+          "effective_date"
+        ]
+      },
+      {
+        "key": "agreement",
+        "kind": "text",
+        "label": "Agreement",
+        "required": true,
+        "wire_keys": [
+          "agreement"
+        ]
+      },
+      {
+        "key": "ai_services",
+        "kind": "text",
+        "label": "AI Services",
+        "required": true,
+        "wire_keys": [
+          "ai_services"
+        ]
+      },
+      {
+        "key": "training_data",
+        "kind": "choice",
+        "label": "Training Data",
+        "required": false,
+        "wire_keys": [
+          "training_data_option",
+          "training_data_number"
+        ],
+        "units": [
+          null,
+          null
+        ]
+      },
+      {
+        "key": "training_purposes",
+        "kind": "text",
+        "label": "Training Purposes",
+        "required": false,
+        "wire_keys": [
+          "training_purposes"
+        ]
+      },
+      {
+        "key": "training_restrictions",
+        "kind": "text",
+        "label": "Training Restrictions",
+        "required": false,
+        "wire_keys": [
+          "training_restrictions"
+        ]
+      },
+      {
+        "key": "improvement_restrictions",
+        "kind": "text",
+        "label": "Improvement Restrictions",
+        "required": false,
+        "wire_keys": [
+          "improvement_restrictions"
+        ]
+      },
+      {
+        "key": "ai_addendum_modifications",
+        "kind": "text",
+        "label": "AI Addendum Modifications",
+        "required": false,
+        "wire_keys": [
+          "ai_addendum_modifications"
+        ]
+      }
+    ]
+  },
+  "business-associate-agreement": {
+    "title": "Business Associate Agreement",
+    "party_roles": [
+      "COMPANY",
+      "PROVIDER"
+    ],
+    "fields": [
+      {
+        "key": "baa_effective_date",
+        "kind": "date",
+        "label": "BAA Effective Date",
+        "required": true,
+        "wire_keys": [
+          "baa_effective_date"
+        ]
+      },
+      {
+        "key": "agreement",
+        "kind": "text",
+        "label": "Agreement",
+        "required": true,
+        "wire_keys": [
+          "agreement"
+        ]
+      },
+      {
+        "key": "services",
+        "kind": "text",
+        "label": "Services",
+        "required": true,
+        "wire_keys": [
+          "services"
+        ]
+      },
+      {
+        "key": "breach_notification_period",
+        "kind": "choice",
+        "label": "Breach Notification Period",
+        "required": true,
+        "wire_keys": [
+          "breach_notification_period_option",
+          "breach_notification_period_number"
+        ],
+        "units": [
+          "day(s)",
+          null
+        ]
+      },
+      {
+        "key": "limitations",
+        "kind": "text",
+        "label": "Limitations",
+        "required": false,
+        "wire_keys": [
+          "limitations"
+        ]
+      },
+      {
+        "key": "baa_modifications",
+        "kind": "text",
+        "label": "BAA Modifications",
+        "required": false,
+        "wire_keys": [
+          "baa_modifications"
+        ]
+      }
+    ]
+  },
+  "cloud-service-agreement": {
+    "title": "Cloud Service Agreement",
+    "party_roles": [
+      "PROVIDER",
+      "CUSTOMER"
+    ],
+    "fields": [
+      {
+        "key": "effective_date",
+        "kind": "date",
+        "label": "Effective Date",
+        "required": true,
+        "wire_keys": [
+          "effective_date"
+        ]
+      },
+      {
+        "key": "cloud_service",
+        "kind": "text",
+        "label": "Cloud Service",
+        "required": true,
+        "wire_keys": [
+          "cloud_service"
+        ]
+      },
+      {
+        "key": "subscription_period",
+        "kind": "choice",
+        "label": "Subscription Period",
+        "required": true,
+        "wire_keys": [
+          "subscription_period_option",
+          "subscription_period_number"
+        ],
+        "units": [
+          "year(s)",
+          null
+        ]
+      },
+      {
+        "key": "cloud_service_fees",
+        "kind": "text",
+        "label": "Cloud Service Fees",
+        "required": true,
+        "wire_keys": [
+          "cloud_service_fees"
+        ]
+      },
+      {
+        "key": "payment_process",
+        "kind": "text",
+        "label": "Payment Process",
+        "required": true,
+        "wire_keys": [
+          "payment_process"
+        ]
+      },
+      {
+        "key": "non_renewal_notice_date",
+        "kind": "text",
+        "label": "Non-Renewal Notice Date",
+        "required": false,
+        "wire_keys": [
+          "non_renewal_notice_date"
+        ]
+      },
+      {
+        "key": "technical_support",
+        "kind": "text",
+        "label": "Technical Support",
+        "required": false,
+        "wire_keys": [
+          "technical_support"
+        ]
+      },
+      {
+        "key": "use_limitations",
+        "kind": "text",
+        "label": "Use Limitations",
+        "required": false,
+        "wire_keys": [
+          "use_limitations"
+        ]
+      },
+      {
+        "key": "general_cap_amount",
+        "kind": "text",
+        "label": "General Cap Amount",
+        "required": true,
+        "wire_keys": [
+          "general_cap_amount"
+        ]
+      },
+      {
+        "key": "governing_law_jurisdiction",
+        "kind": "group",
+        "label": "Governing Law & Jurisdiction",
+        "required": true,
+        "wire_keys": [
+          "governing_law",
+          "jurisdiction"
+        ]
+      },
+      {
+        "key": "agreement_modifications",
+        "kind": "text",
+        "label": "Agreement Modifications",
+        "required": false,
+        "wire_keys": [
+          "agreement_modifications"
+        ]
+      }
+    ]
+  },
+  "data-processing-agreement": {
+    "title": "Data Processing Agreement",
+    "party_roles": [
+      "PROVIDER",
+      "CUSTOMER"
+    ],
+    "fields": [
+      {
+        "key": "effective_date",
+        "kind": "date",
+        "label": "Effective Date",
+        "required": true,
+        "wire_keys": [
+          "effective_date"
+        ]
+      },
+      {
+        "key": "agreement",
+        "kind": "text",
+        "label": "Agreement",
+        "required": true,
+        "wire_keys": [
+          "agreement"
+        ]
+      },
+      {
+        "key": "nature_and_purpose_of_processing",
+        "kind": "text",
+        "label": "Nature and Purpose of Processing",
+        "required": true,
+        "wire_keys": [
+          "nature_and_purpose_of_processing"
+        ]
+      },
+      {
+        "key": "duration_of_processing",
+        "kind": "choice",
+        "label": "Duration of Processing",
+        "required": true,
+        "wire_keys": [
+          "duration_of_processing_option",
+          "duration_of_processing_number"
+        ],
+        "units": [
+          "day(s)",
+          null
+        ]
+      },
+      {
+        "key": "categories_of_data_subjects",
+        "kind": "text",
+        "label": "Categories of Data Subjects",
+        "required": true,
+        "wire_keys": [
+          "categories_of_data_subjects"
+        ]
+      },
+      {
+        "key": "categories_of_personal_data",
+        "kind": "text",
+        "label": "Categories of Personal Data",
+        "required": true,
+        "wire_keys": [
+          "categories_of_personal_data"
+        ]
+      },
+      {
+        "key": "provider_security_contact",
+        "kind": "text",
+        "label": "Provider Security Contact",
+        "required": true,
+        "wire_keys": [
+          "provider_security_contact"
+        ]
+      },
+      {
+        "key": "governing_member_state",
+        "kind": "text",
+        "label": "Governing Member State",
+        "required": false,
+        "wire_keys": [
+          "governing_member_state"
+        ]
+      },
+      {
+        "key": "special_category_data",
+        "kind": "text",
+        "label": "Special Category Data",
+        "required": false,
+        "wire_keys": [
+          "special_category_data"
+        ]
+      },
+      {
+        "key": "approved_subprocessors",
+        "kind": "text",
+        "label": "Approved Subprocessors",
+        "required": false,
+        "wire_keys": [
+          "approved_subprocessors"
+        ]
+      },
+      {
+        "key": "security_policy",
+        "kind": "text",
+        "label": "Security Policy",
+        "required": false,
+        "wire_keys": [
+          "security_policy"
+        ]
+      },
+      {
+        "key": "dpa_modifications",
+        "kind": "text",
+        "label": "DPA Modifications",
+        "required": false,
+        "wire_keys": [
+          "dpa_modifications"
+        ]
+      }
+    ]
+  },
+  "design-partner-agreement": {
+    "title": "Design Partner Agreement",
+    "party_roles": [
+      "PROVIDER",
+      "PARTNER"
+    ],
+    "fields": [
+      {
+        "key": "effective_date",
+        "kind": "date",
+        "label": "Effective Date",
+        "required": true,
+        "wire_keys": [
+          "effective_date"
+        ]
+      },
+      {
+        "key": "program",
+        "kind": "text",
+        "label": "Program",
+        "required": true,
+        "wire_keys": [
+          "program"
+        ]
+      },
+      {
+        "key": "term",
+        "kind": "choice",
+        "label": "Term",
+        "required": true,
+        "wire_keys": [
+          "term_option",
+          "term_number"
+        ],
+        "units": [
+          "year(s)",
+          null
+        ]
+      },
+      {
+        "key": "fees",
+        "kind": "text",
+        "label": "Fees",
+        "required": false,
+        "wire_keys": [
+          "fees"
+        ]
+      },
+      {
+        "key": "governing_law_jurisdiction",
+        "kind": "group",
+        "label": "Governing Law & Jurisdiction",
+        "required": true,
+        "wire_keys": [
+          "governing_law",
+          "jurisdiction"
+        ]
+      },
+      {
+        "key": "agreement_modifications",
+        "kind": "text",
+        "label": "Agreement Modifications",
+        "required": false,
+        "wire_keys": [
+          "agreement_modifications"
+        ]
+      }
+    ]
+  },
+  "mutual-nda": {
+    "title": "Mutual Non-Disclosure Agreement",
+    "party_roles": [
+      "PARTY 1",
+      "PARTY 2"
+    ],
+    "fields": [
+      {
+        "key": "purpose",
+        "kind": "text",
+        "label": "Purpose",
+        "required": true,
+        "wire_keys": [
+          "purpose"
+        ]
+      },
+      {
+        "key": "effective_date",
+        "kind": "date",
+        "label": "Effective Date",
+        "required": true,
+        "wire_keys": [
+          "effective_date"
+        ]
+      },
+      {
+        "key": "mnda_term",
+        "kind": "choice",
+        "label": "MNDA Term",
+        "required": true,
+        "wire_keys": [
+          "mnda_term_option",
+          "mnda_term_number"
+        ],
+        "units": [
+          "year(s)",
+          null
+        ]
+      },
+      {
+        "key": "term_of_confidentiality",
+        "kind": "choice",
+        "label": "Term of Confidentiality",
+        "required": true,
+        "wire_keys": [
+          "term_of_confidentiality_option",
+          "term_of_confidentiality_number"
+        ],
+        "units": [
+          "year(s)",
+          null
+        ]
+      },
+      {
+        "key": "governing_law_jurisdiction",
+        "kind": "group",
+        "label": "Governing Law & Jurisdiction",
+        "required": true,
+        "wire_keys": [
+          "governing_law",
+          "jurisdiction"
+        ]
+      },
+      {
+        "key": "mnda_modifications",
+        "kind": "text",
+        "label": "MNDA Modifications",
+        "required": false,
+        "wire_keys": [
+          "mnda_modifications"
+        ]
+      }
+    ]
+  },
+  "partnership-agreement": {
+    "title": "Partnership Agreement",
+    "party_roles": [
+      "COMPANY",
+      "PARTNER"
+    ],
+    "fields": [
+      {
+        "key": "effective_date",
+        "kind": "date",
+        "label": "Effective Date",
+        "required": true,
+        "wire_keys": [
+          "effective_date"
+        ]
+      },
+      {
+        "key": "partnership",
+        "kind": "text",
+        "label": "Partnership",
+        "required": true,
+        "wire_keys": [
+          "partnership"
+        ]
+      },
+      {
+        "key": "term",
+        "kind": "choice",
+        "label": "Term",
+        "required": true,
+        "wire_keys": [
+          "term_option",
+          "term_number"
+        ],
+        "units": [
+          "year(s)",
+          null
+        ]
+      },
+      {
+        "key": "fees",
+        "kind": "text",
+        "label": "Fees",
+        "required": false,
+        "wire_keys": [
+          "fees"
+        ]
+      },
+      {
+        "key": "brand_guidelines",
+        "kind": "text",
+        "label": "Brand Guidelines",
+        "required": false,
+        "wire_keys": [
+          "brand_guidelines"
+        ]
+      },
+      {
+        "key": "general_cap_amount",
+        "kind": "text",
+        "label": "General Cap Amount",
+        "required": true,
+        "wire_keys": [
+          "general_cap_amount"
+        ]
+      },
+      {
+        "key": "governing_law_jurisdiction",
+        "kind": "group",
+        "label": "Governing Law & Jurisdiction",
+        "required": true,
+        "wire_keys": [
+          "governing_law",
+          "jurisdiction"
+        ]
+      },
+      {
+        "key": "agreement_modifications",
+        "kind": "text",
+        "label": "Agreement Modifications",
+        "required": false,
+        "wire_keys": [
+          "agreement_modifications"
+        ]
+      }
+    ]
+  },
+  "pilot-agreement": {
+    "title": "Pilot Agreement",
+    "party_roles": [
+      "PROVIDER",
+      "CUSTOMER"
+    ],
+    "fields": [
+      {
+        "key": "effective_date",
+        "kind": "date",
+        "label": "Effective Date",
+        "required": true,
+        "wire_keys": [
+          "effective_date"
+        ]
+      },
+      {
+        "key": "product",
+        "kind": "text",
+        "label": "Product",
+        "required": true,
+        "wire_keys": [
+          "product"
+        ]
+      },
+      {
+        "key": "evaluation_purposes",
+        "kind": "text",
+        "label": "Evaluation Purposes",
+        "required": true,
+        "wire_keys": [
+          "evaluation_purposes"
+        ]
+      },
+      {
+        "key": "pilot_period",
+        "kind": "choice",
+        "label": "Pilot Period",
+        "required": true,
+        "wire_keys": [
+          "pilot_period_option",
+          "pilot_period_number"
+        ],
+        "units": [
+          "day(s)",
+          null
+        ]
+      },
+      {
+        "key": "fees",
+        "kind": "text",
+        "label": "Fees",
+        "required": false,
+        "wire_keys": [
+          "fees"
+        ]
+      },
+      {
+        "key": "general_cap_amount",
+        "kind": "text",
+        "label": "General Cap Amount",
+        "required": false,
+        "wire_keys": [
+          "general_cap_amount"
+        ]
+      },
+      {
+        "key": "governing_law_jurisdiction",
+        "kind": "group",
+        "label": "Governing Law & Jurisdiction",
+        "required": true,
+        "wire_keys": [
+          "governing_law",
+          "jurisdiction"
+        ]
+      },
+      {
+        "key": "agreement_modifications",
+        "kind": "text",
+        "label": "Agreement Modifications",
+        "required": false,
+        "wire_keys": [
+          "agreement_modifications"
+        ]
+      }
+    ]
+  },
+  "professional-services-agreement": {
+    "title": "Professional Services Agreement",
+    "party_roles": [
+      "PROVIDER",
+      "CUSTOMER"
+    ],
+    "fields": [
+      {
+        "key": "effective_date",
+        "kind": "date",
+        "label": "Effective Date",
+        "required": true,
+        "wire_keys": [
+          "effective_date"
+        ]
+      },
+      {
+        "key": "services",
+        "kind": "text",
+        "label": "Services",
+        "required": true,
+        "wire_keys": [
+          "services"
+        ]
+      },
+      {
+        "key": "sow_term",
+        "kind": "choice",
+        "label": "SOW Term",
+        "required": true,
+        "wire_keys": [
+          "sow_term_option",
+          "sow_term_number"
+        ],
+        "units": [
+          "year(s)",
+          null
+        ]
+      },
+      {
+        "key": "service_fees",
+        "kind": "text",
+        "label": "Service Fees",
+        "required": true,
+        "wire_keys": [
+          "service_fees"
+        ]
+      },
+      {
+        "key": "payment_process",
+        "kind": "text",
+        "label": "Payment Process",
+        "required": true,
+        "wire_keys": [
+          "payment_process"
+        ]
+      },
+      {
+        "key": "customer_policies",
+        "kind": "text",
+        "label": "Customer Policies",
+        "required": false,
+        "wire_keys": [
+          "customer_policies"
+        ]
+      },
+      {
+        "key": "insurance_minimums",
+        "kind": "text",
+        "label": "Insurance Minimums",
+        "required": false,
+        "wire_keys": [
+          "insurance_minimums"
+        ]
+      },
+      {
+        "key": "security_policy",
+        "kind": "text",
+        "label": "Security Policy",
+        "required": false,
+        "wire_keys": [
+          "security_policy"
+        ]
+      },
+      {
+        "key": "general_cap_amount",
+        "kind": "text",
+        "label": "General Cap Amount",
+        "required": true,
+        "wire_keys": [
+          "general_cap_amount"
+        ]
+      },
+      {
+        "key": "governing_law_jurisdiction",
+        "kind": "group",
+        "label": "Governing Law & Jurisdiction",
+        "required": true,
+        "wire_keys": [
+          "governing_law",
+          "jurisdiction"
+        ]
+      },
+      {
+        "key": "agreement_modifications",
+        "kind": "text",
+        "label": "Agreement Modifications",
+        "required": false,
+        "wire_keys": [
+          "agreement_modifications"
+        ]
+      }
+    ]
+  },
+  "service-level-agreement": {
+    "title": "Service Level Agreement",
+    "party_roles": [
+      "PROVIDER",
+      "CUSTOMER"
+    ],
+    "fields": [
+      {
+        "key": "effective_date",
+        "kind": "date",
+        "label": "Effective Date",
+        "required": true,
+        "wire_keys": [
+          "effective_date"
+        ]
+      },
+      {
+        "key": "cloud_service",
+        "kind": "text",
+        "label": "Cloud Service",
+        "required": true,
+        "wire_keys": [
+          "cloud_service"
+        ]
+      },
+      {
+        "key": "target_uptime",
+        "kind": "text",
+        "label": "Target Uptime",
+        "required": true,
+        "wire_keys": [
+          "target_uptime"
+        ]
+      },
+      {
+        "key": "support_channel",
+        "kind": "text",
+        "label": "Support Channel",
+        "required": true,
+        "wire_keys": [
+          "support_channel"
+        ]
+      },
+      {
+        "key": "target_response_time",
+        "kind": "text",
+        "label": "Target Response Time",
+        "required": false,
+        "wire_keys": [
+          "target_response_time"
+        ]
+      },
+      {
+        "key": "uptime_credit",
+        "kind": "text",
+        "label": "Uptime Credit",
+        "required": false,
+        "wire_keys": [
+          "uptime_credit"
+        ]
+      },
+      {
+        "key": "response_time_credit",
+        "kind": "text",
+        "label": "Response Time Credit",
+        "required": false,
+        "wire_keys": [
+          "response_time_credit"
+        ]
+      },
+      {
+        "key": "scheduled_downtime",
+        "kind": "text",
+        "label": "Scheduled Downtime",
+        "required": false,
+        "wire_keys": [
+          "scheduled_downtime"
+        ]
+      },
+      {
+        "key": "sla_modifications",
+        "kind": "text",
+        "label": "SLA Modifications",
+        "required": false,
+        "wire_keys": [
+          "sla_modifications"
+        ]
+      }
+    ]
+  },
+  "software-license-agreement": {
+    "title": "Software License Agreement",
+    "party_roles": [
+      "PROVIDER",
+      "CUSTOMER"
+    ],
+    "fields": [
+      {
+        "key": "effective_date",
+        "kind": "date",
+        "label": "Effective Date",
+        "required": true,
+        "wire_keys": [
+          "effective_date"
+        ]
+      },
+      {
+        "key": "software",
+        "kind": "text",
+        "label": "Software",
+        "required": true,
+        "wire_keys": [
+          "software"
+        ]
+      },
+      {
+        "key": "permitted_uses",
+        "kind": "text",
+        "label": "Permitted Uses",
+        "required": true,
+        "wire_keys": [
+          "permitted_uses"
+        ]
+      },
+      {
+        "key": "subscription_period",
+        "kind": "choice",
+        "label": "Subscription Period",
+        "required": true,
+        "wire_keys": [
+          "subscription_period_option",
+          "subscription_period_number"
+        ],
+        "units": [
+          "year(s)",
+          null
+        ]
+      },
+      {
+        "key": "license_fees",
+        "kind": "text",
+        "label": "License Fees",
+        "required": true,
+        "wire_keys": [
+          "license_fees"
+        ]
+      },
+      {
+        "key": "payment_process",
+        "kind": "text",
+        "label": "Payment Process",
+        "required": true,
+        "wire_keys": [
+          "payment_process"
+        ]
+      },
+      {
+        "key": "license_limits",
+        "kind": "text",
+        "label": "License Limits",
+        "required": false,
+        "wire_keys": [
+          "license_limits"
+        ]
+      },
+      {
+        "key": "warranty_period",
+        "kind": "text",
+        "label": "Warranty Period",
+        "required": false,
+        "wire_keys": [
+          "warranty_period"
+        ]
+      },
+      {
+        "key": "general_cap_amount",
+        "kind": "text",
+        "label": "General Cap Amount",
+        "required": true,
+        "wire_keys": [
+          "general_cap_amount"
+        ]
+      },
+      {
+        "key": "governing_law_jurisdiction",
+        "kind": "group",
+        "label": "Governing Law & Jurisdiction",
+        "required": true,
+        "wire_keys": [
+          "governing_law",
+          "jurisdiction"
+        ]
+      },
+      {
+        "key": "agreement_modifications",
+        "kind": "text",
+        "label": "Agreement Modifications",
+        "required": false,
+        "wire_keys": [
+          "agreement_modifications"
+        ]
+      }
+    ]
+  }
+}

@@ -5,16 +5,15 @@
  * the document a user reads and the document they download cannot drift apart
  * — which for a legal agreement matters more than the small cost of the extra
  * layer.
+ *
+ * It is also what keeps eleven document types from becoming eleven renderers:
+ * the fields come from the schema, so this is the only place that had to learn
+ * about more than one document.
  */
 
-import { type CoverPageTemplate, SECTION } from "./cover-page-template";
+import { type DocumentValues, resolveField } from "./document-values";
+import type { DocumentSchema } from "./field-schema";
 import { type TextRun, parseInline } from "./inline-markdown";
-import {
-  type MndaValues,
-  formatEffectiveDate,
-  resolveConfidentialityTerm,
-  resolveMndaTerm,
-} from "./mnda";
 
 export interface AgreementLine {
   /** Inline label, e.g. `"Governing Law"`, where the field has more than one. */
@@ -40,6 +39,8 @@ export interface Agreement {
   intro: TextRun[];
   fields: AgreementField[];
   signingStatement: string;
+  /** What the two signing parties are called on this document. */
+  partyRoles: [string, string];
   signatureRows: SignatureRow[];
   /** Common Paper's CC BY attribution. Required by the licence. */
   attribution: TextRun[];
@@ -60,42 +61,21 @@ function paragraphs(markdown: string): string[] {
 const NUMBERED = /^\d+\.\s+/;
 
 export function buildAgreement(
-  template: CoverPageTemplate,
-  values: MndaValues,
+  schema: DocumentSchema,
+  values: DocumentValues,
   standardTerms: string,
 ): Agreement {
   const blocks = paragraphs(standardTerms);
 
   return {
-    title: template.title,
-    intro: parseInline(template.intro),
-    fields: [
-      { heading: SECTION.purpose, lines: [{ value: values.purpose }] },
-      {
-        heading: SECTION.effectiveDate,
-        lines: [{ value: formatEffectiveDate(values.effectiveDate) }],
-      },
-      {
-        heading: SECTION.mndaTerm,
-        lines: [{ value: resolveMndaTerm(template, values) }],
-      },
-      {
-        heading: SECTION.confidentiality,
-        lines: [{ value: resolveConfidentialityTerm(template, values) }],
-      },
-      {
-        heading: SECTION.governingLaw,
-        lines: [
-          { label: "Governing Law", value: values.governingLaw },
-          { label: "Jurisdiction", value: values.jurisdiction },
-        ],
-      },
-      {
-        heading: SECTION.modifications,
-        lines: [{ value: values.modifications.trim() || "None." }],
-      },
-    ],
-    signingStatement: template.signingStatement,
+    title: schema.title,
+    intro: parseInline(schema.intro),
+    fields: schema.fields.map((field) => ({
+      heading: field.label,
+      lines: resolveField(field, values),
+    })),
+    signingStatement: schema.signingStatement,
+    partyRoles: schema.partyRoles,
     signatureRows: [
       { label: "Signature", values: ["", ""], tall: true },
       { label: "Print Name", values: [values.party1.name, values.party2.name] },
@@ -110,7 +90,7 @@ export function buildAgreement(
       },
       { label: "Date", values: ["", ""] },
     ],
-    attribution: parseInline(template.attribution),
+    attribution: parseInline(schema.attribution),
     clauses: blocks
       .filter((block) => NUMBERED.test(block))
       .map((block) => parseInline(block.replace(NUMBERED, ""))),
@@ -120,13 +100,19 @@ export function buildAgreement(
   };
 }
 
-/** A filename naming both parties where known, e.g. `Mutual NDA - Acme and Globex.pdf`. */
-export function agreementFileName(values: MndaValues): string {
+/**
+ * A filename naming both parties where known, e.g.
+ * `Mutual Non-Disclosure Agreement - Acme and Globex.pdf`.
+ */
+export function agreementFileName(
+  schema: DocumentSchema,
+  values: DocumentValues,
+): string {
   const parties = [values.party1.company, values.party2.company]
     .map((company) => company.trim())
     .filter(Boolean);
 
   const suffix = parties.length === 2 ? ` - ${parties.join(" and ")}` : "";
   // Strip characters that are awkward or illegal in filenames.
-  return `Mutual NDA${suffix}`.replace(/[\\/:*?"<>|]/g, "") + ".pdf";
+  return `${schema.title}${suffix}`.replace(/[\\/:*?"<>|]/g, "") + ".pdf";
 }
