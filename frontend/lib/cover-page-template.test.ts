@@ -2,14 +2,13 @@ import { beforeAll, describe, expect, it } from "vitest";
 
 import {
   type CoverPageTemplate,
-  SECTION,
   fillPlaceholder,
   parseCoverPageTemplate,
   placeholderOf,
   placeholderUnit,
   splitAroundPlaceholder,
 } from "./cover-page-template";
-import { loadFixtures } from "@/test/helpers";
+import { loadCoverPage } from "@/test/helpers";
 
 describe("placeholder helpers", () => {
   it("reads the text inside the first marker", () => {
@@ -60,7 +59,7 @@ describe("parseCoverPageTemplate", () => {
   let template: CoverPageTemplate;
 
   beforeAll(async () => {
-    ({ template } = await loadFixtures());
+    template = parseCoverPageTemplate(await loadCoverPage());
   });
 
   it("reads the document title", () => {
@@ -73,19 +72,31 @@ describe("parseCoverPageTemplate", () => {
     expect(template.intro).not.toContain("USING THIS");
   });
 
-  it("finds every section the app fills in", () => {
-    for (const heading of Object.values(SECTION)) {
-      expect(template.sections[heading], heading).toBeDefined();
-    }
+  it("finds every section of the cover page", () => {
+    expect(Object.keys(template.sections)).toEqual([
+      "Purpose",
+      "Effective Date",
+      "MNDA Term",
+      "Term of Confidentiality",
+      "Governing Law & Jurisdiction",
+      "MNDA Modifications",
+    ]);
+  });
+
+  it("reads the party names from the signature table", () => {
+    expect(template.partyRoles).toEqual(["PARTY 1", "PARTY 2"]);
+  });
+
+  it("marks a section carrying the optional marker", () => {
+    expect(template.sections["MNDA Modifications"].required).toBe(false);
+    expect(template.sections["Purpose"].required).toBe(true);
   });
 
   it("reads the <label> hints as help text", () => {
-    expect(template.sections[SECTION.purpose].hint).toBe(
+    expect(template.sections["Purpose"].hint).toBe(
       "How Confidential Information may be used",
     );
-    expect(template.sections[SECTION.mndaTerm].hint).toBe(
-      "The length of this MNDA",
-    );
+    expect(template.sections["MNDA Term"].hint).toBe("The length of this MNDA");
   });
 
   it("leaves hint markup out of the section body", () => {
@@ -95,7 +106,7 @@ describe("parseCoverPageTemplate", () => {
   });
 
   it("collects the two term choices with their placeholders intact", () => {
-    const { choices } = template.sections[SECTION.mndaTerm];
+    const { choices } = template.sections["MNDA Term"];
     expect(choices).toHaveLength(2);
     expect(choices[0]).toBe("Expires [1 year(s)] from Effective Date.");
     expect(choices[1]).toBe(
@@ -104,24 +115,24 @@ describe("parseCoverPageTemplate", () => {
   });
 
   it("collects the confidentiality choices", () => {
-    const { choices } = template.sections[SECTION.confidentiality];
+    const { choices } = template.sections["Term of Confidentiality"];
     expect(choices).toHaveLength(2);
     expect(choices[0]).toContain("[1 year(s)]");
     expect(choices[1]).toBe("In perpetuity.");
   });
 
   it("keeps checkbox lines out of section bodies", () => {
-    expect(template.sections[SECTION.mndaTerm].body).toBe("");
+    expect(template.sections["MNDA Term"].body).toBe("");
   });
 
   it("keeps the suggested purpose in the body as a placeholder", () => {
-    expect(placeholderOf(template.sections[SECTION.purpose].body)).toBe(
+    expect(placeholderOf(template.sections["Purpose"].body)).toBe(
       "Evaluating whether to enter into a business relationship with the other party.",
     );
   });
 
   it("keeps both labelled lines of the governing law section", () => {
-    const { body } = template.sections[SECTION.governingLaw];
+    const { body } = template.sections["Governing Law & Jurisdiction"];
     expect(body).toContain("Governing Law: [Fill in state]");
     expect(body).toContain("Jurisdiction: [Fill in city or county and state");
   });
@@ -166,7 +177,9 @@ describe("parseCoverPageTemplate edge cases", () => {
   });
 
   it("ignores headings deeper than three levels", () => {
-    const parsed = parseCoverPageTemplate("# T\n\n### Real\n\n#### Not a section\n");
+    const parsed = parseCoverPageTemplate(
+      "# T\n\n### Real\n\n#### Not a section\n",
+    );
     expect(Object.keys(parsed.sections)).toEqual(["Real"]);
     expect(parsed.sections.Real.body).toContain("#### Not a section");
   });
@@ -185,6 +198,7 @@ describe("parseCoverPageTemplate edge cases", () => {
       hint: null,
       choices: [],
       body: "",
+      required: true,
     });
   });
 

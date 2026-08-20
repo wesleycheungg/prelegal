@@ -28,6 +28,7 @@ Governing Law: [Fill in state]
 Jurisdiction: [Fill in city or county and state, i.e. “courts located in New Castle, DE”]
 
 ### MNDA Modifications
+<optional/>
 List any modifications to the MNDA
 
 By signing this Cover Page, each party agrees to enter into this MNDA as of the Effective Date.

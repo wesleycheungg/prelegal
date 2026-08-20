@@ -36,7 +36,10 @@ export function AgreementDocument({ agreement }: { agreement: Agreement }) {
 
       <p className="avoid-break">{agreement.signingStatement}</p>
 
-      <SignatureTable rows={agreement.signatureRows} />
+      <SignatureTable
+        rows={agreement.signatureRows}
+        partyRoles={agreement.partyRoles}
+      />
 
       <p className="mt-8 text-xs">
         <Runs runs={agreement.attribution} />
@@ -98,24 +101,27 @@ function Value({ text }: { text: string }) {
   );
 }
 
-function SignatureTable({ rows }: { rows: SignatureRow[] }) {
+function SignatureTable({
+  rows,
+  partyRoles,
+}: {
+  rows: SignatureRow[];
+  partyRoles: [string, string];
+}) {
   return (
     <table className="w-full table-fixed border-collapse text-sm">
       <thead>
         <tr>
           <td className="w-40 border border-slate-400 px-3 py-2" />
-          <th
-            scope="col"
-            className="border border-slate-400 px-3 py-2 text-center font-bold"
-          >
-            PARTY 1
-          </th>
-          <th
-            scope="col"
-            className="border border-slate-400 px-3 py-2 text-center font-bold"
-          >
-            PARTY 2
-          </th>
+          {partyRoles.map((role) => (
+            <th
+              key={role}
+              scope="col"
+              className="border border-slate-400 px-3 py-2 text-center font-bold"
+            >
+              {role}
+            </th>
+          ))}
         </tr>
       </thead>
       <tbody>

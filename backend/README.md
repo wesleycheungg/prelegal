@@ -84,16 +84,31 @@ own 404 page.
 
 ### The assistant
 
-`app/routers/chat.py` is the whole chat feature, Mutual NDA only. It holds the
-conversation, and returns both a reply and whatever that turn settled about the
-agreement's fields.
+`app/routers/chat.py` is the whole chat feature. It holds the conversation and
+returns both a reply and whatever that turn settled.
+
+Two conversations share the endpoint. With no `document`, the assistant is
+working out which agreement is wanted; the pick is typed as a `Literal` of real
+catalog slugs, so it cannot name a document we have no cover page for. Asked for
+something outside the catalog it says so and offers the closest match. Once a
+document is set, it fills in that document's fields and nothing else.
+
+The field set is generated per document by `app/field_schema.py`, which derives
+it from the cover page markdown by the same rules `frontend/lib/field-schema.ts`
+applies to the same file. `field-schemas.json` at the repository root pins the
+result and both test suites assert against it, so a field name the two ends
+disagree about is a red test rather than a value that silently never arrives.
 
 It populates values, never wording. The finished document says only what the
-template says, so the model chooses between the template's own two term
-sentences rather than writing one; there is nowhere in its schema to put a
-sentence of its own. Whatever it does return is checked before it leaves —
-a date that is not ISO, or a term of "-3" years, is dropped rather than passed
-on to a document someone may sign.
+template says, so the model chooses between the template's own sentences rather
+than writing one; there is nowhere in its generated schema to put a sentence of
+its own. Whatever it does return is checked before it leaves — a date that is
+not ISO, or a term of "-3" years, is dropped rather than passed on to a document
+someone may sign.
+
+While anything required is still unanswered, a reply that does not end in a
+question gets one, named after the field that is missing. The prompt asks for
+that too, but a prompt is advice; this makes it a guarantee.
 
 The conversation is not stored. The client sends the history and its values
 every turn, which keeps this server free of per-user state.

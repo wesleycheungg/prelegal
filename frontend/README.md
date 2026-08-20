@@ -1,7 +1,9 @@
 # frontend
 
-The Prelegal web app. Currently a single tool: a **Mutual NDA creator** that
-takes a handful of details and produces a complete, downloadable agreement.
+The Prelegal web app: an **AI chat that drafts a legal agreement**. It works
+out which of the eleven catalogued documents you need, fills it in through
+conversation, and produces a complete, downloadable PDF. A form beside the chat
+does the same job by hand.
 
 Built with Next.js (App Router), TypeScript and Tailwind CSS.
 

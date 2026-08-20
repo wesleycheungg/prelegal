@@ -5,11 +5,23 @@
   "retrieved": "2026-07-31",
   "templates": [
     {
+      "name": "AI Addendum Cover Page",
+      "description": "Fill-in cover page for the ai addendum, capturing the agreement it supplements, the AI services covered, and what Provider may do with input and output for training and improvement, and incorporating the standard terms by reference.",
+      "filename": "templates/ai-addendum-cover-page.md",
+      "source": "Prepared for Prelegal from the cover page references in the Common Paper Standard Terms. Not part of the upstream Common Paper repository."
+    },
+    {
       "name": "AI Addendum",
       "description": "Addendum that supplements a Cloud Service Agreement or Software License Agreement when the product includes AI services, covering input and output ownership, usage restrictions, training data, and AI-specific warranties.",
       "filename": "templates/ai-addendum.md",
       "source_repo": "https://github.com/CommonPaper/AI-Addendum",
       "source_commit": "09e87130b4f5bf4698711e1b85e8acb347ce9085"
+    },
+    {
+      "name": "Business Associate Agreement Cover Page",
+      "description": "Fill-in cover page for the business associate agreement, capturing the agreement it supplements, the services involving protected health information, and the breach notification period, and incorporating the standard terms by reference.",
+      "filename": "templates/business-associate-agreement-cover-page.md",
+      "source": "Prepared for Prelegal from the cover page references in the Common Paper Standard Terms. Not part of the upstream Common Paper repository."
     },
     {
       "name": "Business Associate Agreement",
@@ -19,11 +31,23 @@
       "source_commit": "6ad457b61913faa9fb8071bbf1adfa4ecb726648"
     },
     {
+      "name": "Cloud Service Agreement Cover Page",
+      "description": "Fill-in cover page for the cloud service agreement, capturing the parties, the cloud service, subscription period, fees, payment process, liability cap, and governing law, and incorporating the standard terms by reference.",
+      "filename": "templates/cloud-service-agreement-cover-page.md",
+      "source": "Prepared for Prelegal from the cover page references in the Common Paper Standard Terms. Not part of the upstream Common Paper repository."
+    },
+    {
       "name": "Cloud Service Agreement",
       "description": "Standard terms for selling and buying cloud software and SaaS products, covering subscriptions, order forms, payment, data protection, warranties, indemnities, and limitations of liability.",
       "filename": "templates/cloud-service-agreement.md",
       "source_repo": "https://github.com/CommonPaper/CSA",
       "source_commit": "396425ad9934c58204abefe0d3171b118b0ef695"
+    },
+    {
+      "name": "Data Processing Agreement Cover Page",
+      "description": "Fill-in cover page for the data processing agreement, capturing the agreement it supplements, the nature and duration of processing, the data and data subjects involved, and the security contact, and incorporating the standard terms by reference.",
+      "filename": "templates/data-processing-agreement-cover-page.md",
+      "source": "Prepared for Prelegal from the cover page references in the Common Paper Standard Terms. Not part of the upstream Common Paper repository."
     },
     {
       "name": "Data Processing Agreement",
@@ -33,18 +57,17 @@
       "source_commit": "3873abc16ec1bfda23daca8c0c0d21e7e4dcc801"
     },
     {
+      "name": "Design Partner Agreement Cover Page",
+      "description": "Fill-in cover page for the design partner agreement, capturing the parties, the program, the term, any fees, and governing law, and incorporating the standard terms by reference.",
+      "filename": "templates/design-partner-agreement-cover-page.md",
+      "source": "Prepared for Prelegal from the cover page references in the Common Paper Standard Terms. Not part of the upstream Common Paper repository."
+    },
+    {
       "name": "Design Partner Agreement",
       "description": "Agreement for collaborating with an early customer on developing a product, covering feedback, access to pre-release software, confidentiality, and ownership of the resulting intellectual property.",
       "filename": "templates/design-partner-agreement.md",
       "source_repo": "https://github.com/CommonPaper/Design-Partner-Agreement",
       "source_commit": "6bb3030f0b13f0ee50164d5dc5a4af442979c9b8"
-    },
-    {
-      "name": "Mutual NDA Standard Terms",
-      "description": "Standard terms of the mutual non-disclosure agreement, defining confidential information, permitted uses and disclosures, the confidentiality period, and the return or destruction of materials.",
-      "filename": "templates/mutual-nda.md",
-      "source_repo": "https://github.com/CommonPaper/Mutual-NDA",
-      "source_commit": "f90b8ac6a8ea937c2daebe90c059a4c2e51d775a"
     },
     {
       "name": "Mutual NDA Cover Page",
@@ -54,11 +77,30 @@
       "source_commit": "f90b8ac6a8ea937c2daebe90c059a4c2e51d775a"
     },
     {
+      "name": "Mutual NDA Standard Terms",
+      "description": "Standard terms of the mutual non-disclosure agreement, defining confidential information, permitted uses and disclosures, the confidentiality period, and the return or destruction of materials.",
+      "filename": "templates/mutual-nda.md",
+      "source_repo": "https://github.com/CommonPaper/Mutual-NDA",
+      "source_commit": "f90b8ac6a8ea937c2daebe90c059a4c2e51d775a"
+    },
+    {
+      "name": "Partnership Agreement Cover Page",
+      "description": "Fill-in cover page for the partnership agreement, capturing the parties, what each will do, the term, brand guidelines, liability cap, and governing law, and incorporating the standard terms by reference.",
+      "filename": "templates/partnership-agreement-cover-page.md",
+      "source": "Prepared for Prelegal from the cover page references in the Common Paper Standard Terms. Not part of the upstream Common Paper repository."
+    },
+    {
       "name": "Partnership Agreement",
       "description": "Agreement between two companies collaborating commercially, where each party's obligations are set out in the cover page, and covering fees, trademark licensing, an escalation procedure, and term and termination.",
       "filename": "templates/partnership-agreement.md",
       "source_repo": "https://github.com/CommonPaper/Partnership-Agreement",
       "source_commit": "8e2c9bc2d68993a4190e51854d9cc9f5763709b6"
+    },
+    {
+      "name": "Pilot Agreement Cover Page",
+      "description": "Fill-in cover page for the pilot agreement, capturing the parties, the product being evaluated, the pilot period, any fees, and governing law, and incorporating the standard terms by reference.",
+      "filename": "templates/pilot-agreement-cover-page.md",
+      "source": "Prepared for Prelegal from the cover page references in the Common Paper Standard Terms. Not part of the upstream Common Paper repository."
     },
     {
       "name": "Pilot Agreement",
@@ -68,6 +110,12 @@
       "source_commit": "e55faf4efe9b277ab02d44d274c5152d901a1d3c"
     },
     {
+      "name": "Professional Services Agreement Cover Page",
+      "description": "Fill-in cover page for the professional services agreement, capturing the parties, the services, the statement of work term, fees, insurance and security requirements, and governing law, and incorporating the standard terms by reference.",
+      "filename": "templates/professional-services-agreement-cover-page.md",
+      "source": "Prepared for Prelegal from the cover page references in the Common Paper Standard Terms. Not part of the upstream Common Paper repository."
+    },
+    {
       "name": "Professional Services Agreement",
       "description": "Standard terms for providing professional services under statements of work, covering deliverables, acceptance, fees and expenses, ownership of work product, and service warranties.",
       "filename": "templates/professional-services-agreement.md",
@@ -75,11 +123,23 @@
       "source_commit": "25686feb10b818a8b45e6a92c2e3bfd3d8f10e64"
     },
     {
+      "name": "Service Level Agreement Cover Page",
+      "description": "Fill-in cover page for the service level agreement, capturing the cloud service covered, target uptime and response time, the support channel, and the service credits earned when targets are missed, and incorporating the standard terms by reference.",
+      "filename": "templates/service-level-agreement-cover-page.md",
+      "source": "Prepared for Prelegal from the cover page references in the Common Paper Standard Terms. Not part of the upstream Common Paper repository."
+    },
+    {
       "name": "Service Level Agreement",
       "description": "Service level terms designed to accompany the Cloud Service Agreement, defining uptime commitments, support response times, service credits, and exclusions such as scheduled maintenance.",
       "filename": "templates/service-level-agreement.md",
       "source_repo": "https://github.com/CommonPaper/SLA",
       "source_commit": "6cc811027b5bba4551a7091907a65e4c2c17349b"
+    },
+    {
+      "name": "Software License Agreement Cover Page",
+      "description": "Fill-in cover page for the software license agreement, capturing the parties, the software, permitted uses, subscription period, fees, licence limits, and governing law, and incorporating the standard terms by reference.",
+      "filename": "templates/software-license-agreement-cover-page.md",
+      "source": "Prepared for Prelegal from the cover page references in the Common Paper Standard Terms. Not part of the upstream Common Paper repository."
     },
     {
       "name": "Software License Agreement",

@@ -10,10 +10,20 @@ import {
   filledFieldNames,
   sendMessage,
 } from "@/lib/chat";
-import type { MndaValues } from "@/lib/mnda";
+import type { DocumentValues } from "@/lib/document-values";
+import type { DocumentSchema } from "@/lib/field-schema";
 
-interface MndaChatProps {
-  values: MndaValues;
+interface ChosenDocument {
+  slug: string;
+  schema: DocumentSchema;
+  values: DocumentValues;
+}
+
+interface DocumentChatProps {
+  /** The document being filled in, or null while one is still being chosen. */
+  document: ChosenDocument | null;
+  /** Called when the assistant settles on which agreement is wanted. */
+  onDocument: (slug: string) => void;
   /**
    * Takes a function of the current values rather than the values themselves.
    *
@@ -21,11 +31,11 @@ interface MndaChatProps {
    * reachable throughout. Merging into the values captured when the message was
    * sent would throw away anything typed in the meantime.
    */
-  onValues: (merge: (current: MndaValues) => MndaValues) => void;
+  onValues: (merge: (current: DocumentValues) => DocumentValues) => void;
 }
 
 /**
- * The conversation that fills in the agreement.
+ * The conversation that chooses an agreement and fills it in.
  *
  * The assistant asks, the user answers, and whatever the answer settles is
  * written into the values behind the live preview. What each turn filled in is
@@ -36,9 +46,9 @@ interface MndaChatProps {
  * nothing and the first exchange is immediate.
  */
 const GREETING =
-  "Hello — I can put together a Mutual NDA with you. Tell me who the two " +
-  "companies are and what you will be sharing information about, and I will " +
-  "fill in the rest as we go.";
+  "Hello — I can help you put together an agreement. Tell me what you need " +
+  "and who it is between, and I will find the right document and fill it in " +
+  "as we go.";
 
 interface Turn {
   role: "user" | "assistant";
@@ -48,7 +58,11 @@ interface Turn {
   failed?: boolean;
 }
 
-export function MndaChat({ values, onValues }: MndaChatProps) {
+export function DocumentChat({
+  document,
+  onDocument,
+  onValues,
+}: DocumentChatProps) {
   const [turns, setTurns] = useState<Turn[]>([
     { role: "assistant", content: GREETING },
   ]);
@@ -58,6 +72,8 @@ export function MndaChat({ values, onValues }: MndaChatProps) {
 
   const transcript = useRef<HTMLDivElement>(null);
   const composer = useRef<HTMLTextAreaElement>(null);
+  /** Which agreement is open now, as opposed to when a request was sent. */
+  const open = useRef<string | null>(document?.slug ?? null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -72,6 +88,20 @@ export function MndaChat({ values, onValues }: MndaChatProps) {
     const log = transcript.current;
     if (log) log.scrollTop = log.scrollHeight;
   }, [turns, busy]);
+
+  useEffect(() => {
+    // Put the cursor back where the next message gets typed once the assistant
+    // has finished. This runs after the DOM has settled rather than inside the
+    // request's `finally`, so it survives the composer being replaced — which
+    // is what happens when a reply chooses the document and the pane rebuilds.
+    if (!busy && available !== false) composer.current?.focus();
+  }, [busy, available, document?.slug]);
+
+  useEffect(() => {
+    // Read by `send` after its request comes back, to find out whether the
+    // answer is still about the agreement it was asked about.
+    open.current = document?.slug ?? null;
+  });
 
   const send = async () => {
     const message = draft.trim();
@@ -89,11 +119,39 @@ export function MndaChat({ values, onValues }: MndaChatProps) {
         .slice(1)
         .map(({ role, content }) => ({ role, content }));
 
-      const { reply, fields } = await sendMessage(history, values);
-      onValues((current) => applyFields(current, fields));
+      const asked = document;
+      const turn = await sendMessage(history, asked);
+
+      // The agreement can be changed from the picker while this was in the
+      // air. The answer describes the one that was open when it was asked
+      // for, and most cover pages share field names, so applying it now would
+      // merge cleanly and invisibly into a document nobody confirmed it for.
+      if (open.current !== (asked?.slug ?? null)) {
+        setTurns([
+          ...spoken,
+          {
+            role: "assistant",
+            content:
+              "You changed agreement while I was answering, so I have left " +
+              "that out. Tell me again and I will fill in this one.",
+            failed: true,
+          },
+        ]);
+        return;
+      }
+
+      if (turn.document && !asked) onDocument(turn.document);
+      if (asked) {
+        onValues((current) => applyFields(asked.schema, current, turn.fields));
+      }
+
       setTurns([
         ...spoken,
-        { role: "assistant", content: reply, filled: filledFieldNames(fields) },
+        {
+          role: "assistant",
+          content: turn.reply,
+          filled: asked ? filledFieldNames(asked.schema, turn.fields) : [],
+        },
       ]);
     } catch (cause) {
       const explanation =
@@ -105,10 +163,12 @@ export function MndaChat({ values, onValues }: MndaChatProps) {
       // it disappear is worse than seeing it go unanswered. It also goes back
       // in the box, so sending again does not mean typing it again.
       setDraft(message);
-      setTurns([...spoken, { role: "assistant", content: explanation, failed: true }]);
+      setTurns([
+        ...spoken,
+        { role: "assistant", content: explanation, failed: true },
+      ]);
     } finally {
       setBusy(false);
-      composer.current?.focus();
     }
   };
 
@@ -163,7 +223,11 @@ export function MndaChat({ values, onValues }: MndaChatProps) {
                 void send();
               }
             }}
-            placeholder="Tell the assistant about your agreement…"
+            placeholder={
+              document
+                ? "Tell the assistant about your agreement…"
+                : "Describe the agreement you need…"
+            }
             className="min-h-[3rem] flex-1 resize-y rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
           />
           <button

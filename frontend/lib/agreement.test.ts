@@ -1,30 +1,46 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { type Agreement, agreementFileName, buildAgreement } from "./agreement";
-import type { CoverPageTemplate } from "./cover-page-template";
-import type { MndaValues } from "./mnda";
-import { loadFixtures, sampleValues } from "@/test/helpers";
+import { createDefaultValues } from "./document-values";
+import type { DocumentDefinition } from "./templates";
+import { loadDocument, loadFixtures, sampleValues } from "@/test/helpers";
 
-let template: CoverPageTemplate;
-let standardTerms: string;
-
-const build = (values: MndaValues = sampleValues()): Agreement =>
-  buildAgreement(template, values, standardTerms);
+let mnda: DocumentDefinition;
 
 beforeAll(async () => {
-  ({ template, standardTerms } = await loadFixtures());
+  mnda = await loadFixtures();
 });
 
+const build = (values = sampleValues()) =>
+  buildAgreement(mnda.schema, values, mnda.standardTerms);
+
 describe("buildAgreement", () => {
-  it("carries the title and intro through from the template", () => {
-    const agreement = build();
-    expect(agreement.title).toBe("Mutual Non-Disclosure Agreement");
-    expect(agreement.intro.map((run) => run.text).join("")).toContain(
-      "consists of",
+  it("still produces exactly what it produced before the refactor", async () => {
+    // Captured from the shipped Mutual NDA before the schema layer existed.
+    // KAN-3 and KAN-5 put this document in front of users; generalising the
+    // machinery underneath it is not allowed to change a word of it.
+    const fixture = JSON.parse(
+      await readFile(
+        path.join(process.cwd(), "test/mutual-nda-agreement.json"),
+        "utf8",
+      ),
     );
+
+    const { partyRoles, ...agreement } = build();
+
+    expect(agreement).toEqual(fixture);
+    // The one addition: who signs, which used to be hardcoded in the renderers.
+    expect(partyRoles).toEqual(["PARTY 1", "PARTY 2"]);
   });
 
-  it("lays the cover page fields out in the template's order", () => {
+  it("titles the agreement from the cover page", () => {
+    expect(build().title).toBe("Mutual Non-Disclosure Agreement");
+  });
+
+  it("lays the fields out in the order the cover page lists them", () => {
     expect(build().fields.map((field) => field.heading)).toEqual([
       "Purpose",
       "Effective Date",
@@ -35,169 +51,122 @@ describe("buildAgreement", () => {
     ]);
   });
 
-  it("resolves the user's values into the fields", () => {
-    const agreement = build();
-    const value = (heading: string) =>
-      agreement.fields.find((field) => field.heading === heading)?.lines[0]
-        .value;
+  it("resolves a choice to the template's own sentence", () => {
+    const term = build().fields.find((field) => field.heading === "MNDA Term");
 
-    expect(value("Purpose")).toBe("Evaluating a potential partnership.");
-    expect(value("Effective Date")).toBe("August 3, 2026");
-    expect(value("MNDA Term")).toBe("Expires 2 years from Effective Date.");
-    expect(value("Term of Confidentiality")).toContain("3 years");
+    expect(term?.lines[0].value).toBe("Expires 2 years from Effective Date.");
   });
 
-  it("labels the two governing law lines separately", () => {
-    const field = build().fields.find(
-      (candidate) => candidate.heading === "Governing Law & Jurisdiction",
+  it("uses the alternative sentence when it is the one chosen", () => {
+    const values = sampleValues();
+    values.choices.mnda_term = { index: 1, number: "2" };
+
+    const term = build(values).fields.find(
+      (field) => field.heading === "MNDA Term",
     );
 
-    expect(field?.lines).toEqual([
+    expect(term?.lines[0].value).toBe(
+      "Continues until terminated in accordance with the terms of the MNDA.",
+    );
+  });
+
+  it("labels each line of a grouped field", () => {
+    const law = build().fields.find(
+      (field) => field.heading === "Governing Law & Jurisdiction",
+    );
+
+    expect(law?.lines).toEqual([
       { label: "Governing Law", value: "Delaware" },
       { label: "Jurisdiction", value: "courts located in New Castle, DE" },
     ]);
   });
 
-  it("records no modifications as 'None.' rather than a blank", () => {
-    expect(build(sampleValues({ modifications: "" })).fields.at(-1)?.lines[0]
-      .value).toBe("None.");
-    expect(
-      build(sampleValues({ modifications: "   " })).fields.at(-1)?.lines[0]
-        .value,
-    ).toBe("None.");
-  });
-
-  it("keeps supplied modifications", () => {
-    const agreement = build(sampleValues({ modifications: "Section 5 amended." }));
-    expect(agreement.fields.at(-1)?.lines[0].value).toBe("Section 5 amended.");
-  });
-
-  it("leaves unfilled values empty so they render as a rule to write on", () => {
-    const agreement = build(sampleValues({ governingLaw: "", jurisdiction: "" }));
-    const field = agreement.fields.find(
-      (candidate) => candidate.heading === "Governing Law & Jurisdiction",
+  it("reads an empty optional field as None.", () => {
+    const modifications = build().fields.find(
+      (field) => field.heading === "MNDA Modifications",
     );
-    expect(field?.lines.map((line) => line.value)).toEqual(["", ""]);
+
+    expect(modifications?.lines[0].value).toBe("None.");
   });
 
-  it("builds the signature rows in the template's order", () => {
-    expect(build().signatureRows.map((row) => row.label)).toEqual([
-      "Signature",
-      "Print Name",
-      "Title",
-      "Company",
-      "Notice Address",
-      "Date",
-    ]);
+  it("leaves a required field empty so the document shows a rule to write on", () => {
+    const values = sampleValues();
+    values.fields.purpose = "";
+
+    const purpose = build(values).fields.find(
+      (field) => field.heading === "Purpose",
+    );
+
+    expect(purpose?.lines[0].value).toBe("");
   });
 
-  it("fills each party into its own column", () => {
-    const rows = build().signatureRows;
-    const row = (label: string) =>
-      rows.find((candidate) => candidate.label === label)?.values;
-
-    expect(row("Print Name")).toEqual(["Ada Lovelace", "Alan Turing"]);
-    expect(row("Company")).toEqual(["Acme Inc.", "Globex Ltd."]);
-    expect(row("Notice Address")).toEqual([
-      "legal@acme.example",
-      "1 Globex Way\nLondon",
-    ]);
-  });
-
-  it("leaves the hand-signed rows empty, with room to write on Signature", () => {
-    const rows = build().signatureRows;
-    const signature = rows.find((row) => row.label === "Signature");
-    const date = rows.find((row) => row.label === "Date");
-
-    expect(signature?.values).toEqual(["", ""]);
-    expect(signature?.tall).toBe(true);
-    expect(date?.values).toEqual(["", ""]);
-  });
-
-  it("splits the Standard Terms into their eleven numbered clauses", () => {
+  it("keeps the numbered Standard Terms clauses", () => {
     const agreement = build();
+
     expect(agreement.clauses).toHaveLength(11);
-    expect(agreement.clauses[0].map((run) => run.text).join("")).toContain(
-      "Introduction",
+    expect(agreement.standardTermsFooter.length).toBeGreaterThan(0);
+  });
+});
+
+describe("other documents", () => {
+  let pilot: DocumentDefinition;
+
+  beforeAll(async () => {
+    pilot = await loadDocument("pilot-agreement");
+  });
+
+  it("builds an agreement the same way", () => {
+    const agreement = buildAgreement(
+      pilot.schema,
+      createDefaultValues(pilot.schema),
+      pilot.standardTerms,
     );
-    expect(agreement.clauses[10].map((run) => run.text).join("")).toContain(
-      "General",
+
+    expect(agreement.title).toBe("Pilot Agreement");
+    expect(agreement.partyRoles).toEqual(["PROVIDER", "CUSTOMER"]);
+    expect(agreement.clauses.length).toBeGreaterThan(0);
+  });
+
+  it("carries the document's own party names into the signature rows", () => {
+    const values = createDefaultValues(pilot.schema);
+    values.party1.company = "Acme Inc.";
+
+    const agreement: Agreement = buildAgreement(
+      pilot.schema,
+      values,
+      pilot.standardTerms,
     );
-  });
+    const company = agreement.signatureRows.find(
+      (row) => row.label === "Company",
+    );
 
-  it("strips the list numbering, since rendering supplies it", () => {
-    for (const clause of build().clauses) {
-      expect(clause[0].text).not.toMatch(/^\d+\./);
-    }
-  });
-
-  it("emphasises the clause headings and cover page cross-references", () => {
-    const first = build().clauses[0];
-    expect(first[0]).toEqual({ text: "Introduction", bold: true });
-    expect(first.some((run) => run.bold && run.text === "Purpose")).toBe(true);
-  });
-
-  it("keeps the licence attribution on both the cover page and the terms", () => {
-    const agreement = build();
-    const text = (runs: { text: string }[]) =>
-      runs.map((run) => run.text).join("");
-
-    expect(text(agreement.attribution)).toContain("CC BY 4.0");
-    expect(text(agreement.standardTermsFooter)).toContain("CC BY 4.0");
-  });
-
-  it("keeps the attribution's link target", () => {
-    expect(
-      build().attribution.some((run) => run.href?.includes("creativecommons")),
-    ).toBe(true);
-  });
-
-  it("does not mistake the trailing attribution for a clause", () => {
-    for (const clause of build().clauses) {
-      expect(clause.map((run) => run.text).join("")).not.toContain(
-        "free to use under",
-      );
-    }
+    expect(company?.values).toEqual(["Acme Inc.", ""]);
   });
 });
 
 describe("agreementFileName", () => {
-  it("names both parties when both companies are known", () => {
-    expect(agreementFileName(sampleValues())).toBe(
-      "Mutual NDA - Acme Inc. and Globex Ltd..pdf",
+  it("names both parties when both are known", () => {
+    expect(agreementFileName(mnda.schema, sampleValues())).toBe(
+      "Mutual Non-Disclosure Agreement - Acme Inc. and Globex Ltd..pdf",
     );
   });
 
-  it("falls back to a plain name when a company is missing", () => {
-    const base = sampleValues();
-    expect(
-      agreementFileName(sampleValues({ party2: { ...base.party2, company: "" } })),
-    ).toBe("Mutual NDA.pdf");
-  });
+  it("falls back to the document's title when a company is missing", () => {
+    const values = sampleValues();
+    values.party2.company = "";
 
-  it("falls back to a plain name when neither company is known", () => {
-    const base = sampleValues();
-    const values = sampleValues({
-      party1: { ...base.party1, company: "  " },
-      party2: { ...base.party2, company: "" },
-    });
-    expect(agreementFileName(values)).toBe("Mutual NDA.pdf");
+    expect(agreementFileName(mnda.schema, values)).toBe(
+      "Mutual Non-Disclosure Agreement.pdf",
+    );
   });
 
   it("strips characters that are illegal in filenames", () => {
-    const base = sampleValues();
-    const values = sampleValues({
-      party1: { ...base.party1, company: 'A/B:C*D?E"F<G>H|I\\J' },
-    });
-    const name = agreementFileName(values);
+    const values = sampleValues();
+    values.party1.company = "A/C: Ltd";
+    values.party2.company = "B?Co";
 
-    expect(name).toBe("Mutual NDA - ABCDEFGHIJ and Globex Ltd..pdf");
-    for (const illegal of ['/', "\\", ":", "*", "?", '"', "<", ">", "|"]) {
-      expect(name, illegal).not.toContain(illegal);
-    }
-  });
-
-  it("always ends in .pdf", () => {
-    expect(agreementFileName(sampleValues())).toMatch(/\.pdf$/);
+    expect(agreementFileName(mnda.schema, values)).toBe(
+      "Mutual Non-Disclosure Agreement - AC Ltd and BCo.pdf",
+    );
   });
 });

@@ -2,64 +2,80 @@
 
 import { inflateSync } from "node:zlib";
 
-import {
-  type CoverPageTemplate,
-  parseCoverPageTemplate,
-} from "@/lib/cover-page-template";
 import type { ChatFields } from "@/lib/chat";
-import type { MndaValues } from "@/lib/mnda";
-import { prepareStandardTerms } from "@/lib/standard-terms";
-import { TEMPLATE_FILE, readTemplate } from "@/lib/templates";
+import type { DocumentValues } from "@/lib/document-values";
+import {
+  type DocumentDefinition,
+  loadDocuments,
+  readTemplate,
+} from "@/lib/templates";
 
 /**
- * Loads the real templates from `templates/`.
+ * Loads the real documents from `templates/`.
  *
  * Tests deliberately run against the actual files rather than inline fixtures:
  * the parser's whole job is to cope with these documents, and a fixture that
  * drifted from them would test nothing.
  */
-export async function loadFixtures(): Promise<{
-  template: CoverPageTemplate;
-  standardTerms: string;
-  coverPageMarkdown: string;
-}> {
-  const [coverPageMarkdown, standardTermsMarkdown] = await Promise.all([
-    readTemplate(TEMPLATE_FILE.mutualNdaCoverPage),
-    readTemplate(TEMPLATE_FILE.mutualNda),
-  ]);
-
-  return {
-    template: parseCoverPageTemplate(coverPageMarkdown),
-    standardTerms: prepareStandardTerms(standardTermsMarkdown),
-    coverPageMarkdown,
-  };
+export async function loadAllDocuments(): Promise<DocumentDefinition[]> {
+  return loadDocuments();
 }
 
-/** A fully populated agreement, for tests that need every field present. */
-export function sampleValues(overrides: Partial<MndaValues> = {}): MndaValues {
+/** One document by slug, for tests about a particular agreement. */
+export async function loadDocument(slug: string): Promise<DocumentDefinition> {
+  const documents = await loadDocuments();
+  const found = documents.find((document) => document.slug === slug);
+  if (!found) throw new Error(`No document '${slug}'`);
+  return found;
+}
+
+/** A cover page's raw markdown, for the tests about parsing it. */
+export function loadCoverPage(slug = "mutual-nda"): Promise<string> {
+  return readTemplate(`${slug}-cover-page.md`);
+}
+
+/** The Mutual NDA, which most tests use because it is the one that shipped. */
+export function loadFixtures(): Promise<DocumentDefinition> {
+  return loadDocument("mutual-nda");
+}
+
+/**
+ * A fully populated Mutual NDA, for tests that need every field present.
+ *
+ * Keyed by the field names `field-schema` derives, which is what the whole app
+ * uses now — `mnda_term` rather than a `mndaTermKind` property.
+ */
+export function sampleValues(
+  overrides: Partial<DocumentValues> = {},
+): DocumentValues {
   return {
-    purpose: "Evaluating a potential partnership.",
-    effectiveDate: "2026-08-03",
-    mndaTermKind: "fixed",
-    mndaTermYears: "2",
-    confidentialityKind: "fixed",
-    confidentialityYears: "3",
-    governingLaw: "Delaware",
-    jurisdiction: "courts located in New Castle, DE",
-    modifications: "",
+    fields: {
+      purpose: "Evaluating a potential partnership.",
+      effective_date: "2026-08-03",
+      governing_law: "Delaware",
+      jurisdiction: "courts located in New Castle, DE",
+      mnda_modifications: "",
+      ...overrides.fields,
+    },
+    choices: {
+      mnda_term: { index: 0, number: "2" },
+      term_of_confidentiality: { index: 0, number: "3" },
+      ...overrides.choices,
+    },
     party1: {
       name: "Ada Lovelace",
       title: "CEO",
       company: "Acme Inc.",
       noticeAddress: "legal@acme.example",
+      ...overrides.party1,
     },
     party2: {
       name: "Alan Turing",
       title: "General Counsel",
       company: "Globex Ltd.",
       noticeAddress: "1 Globex Way\nLondon",
+      ...overrides.party2,
     },
-    ...overrides,
   };
 }
 
@@ -93,10 +109,11 @@ export function extractPdfPages(pdf: Buffer): string[] {
 
     // `[\s\S]` rather than the `s` flag, which needs a newer target than this
     // project compiles to.
-    const runs = [...content.matchAll(/\[([\s\S]*?)\]\s*TJ/g)].map(([, array]) =>
-      [...array.matchAll(/<([0-9A-Fa-f]+)>/g)]
-        .map(([, hex]) => Buffer.from(hex, "hex").toString("latin1"))
-        .join(""),
+    const runs = [...content.matchAll(/\[([\s\S]*?)\]\s*TJ/g)].map(
+      ([, array]) =>
+        [...array.matchAll(/<([0-9A-Fa-f]+)>/g)]
+          .map(([, hex]) => Buffer.from(hex, "hex").toString("latin1"))
+          .join(""),
     );
 
     if (runs.length) pages.push(decodeWinAnsi(runs.join(" ")));
@@ -119,13 +136,13 @@ export function extractPdfText(pdf: Buffer): string {
  * characters and assertions on the prose fail for the wrong reason.
  */
 const WIN_ANSI: Record<string, string> = {
-  "\x85": "\u2026",
-  "\x91": "\u2018",
-  "\x92": "\u2019",
-  "\x93": "\u201c",
-  "\x94": "\u201d",
-  "\x96": "\u2013",
-  "\x97": "\u2014",
+  "\x85": "…",
+  "\x91": "‘",
+  "\x92": "’",
+  "\x93": "“",
+  "\x94": "”",
+  "\x96": "–",
+  "\x97": "—",
 };
 
 function decodeWinAnsi(text: string): string {
@@ -138,30 +155,11 @@ export function countPdfPages(pdf: Buffer): number {
 }
 
 /**
- * A turn that settled nothing, to be overridden one field at a time.
+ * A turn that settled nothing.
  *
- * Shared because it is the full field list written out, and two copies of that
- * would be two things to keep in step with the backend's own schema.
+ * The wire shape is now a plain map, so an empty turn is an empty object —
+ * there is no longer a field list to keep in step by hand.
  */
-export function emptyChatFields(overrides: Partial<ChatFields> = {}): ChatFields {
-  return {
-    purpose: null,
-    effective_date: null,
-    mnda_term_kind: null,
-    mnda_term_years: null,
-    confidentiality_kind: null,
-    confidentiality_years: null,
-    governing_law: null,
-    jurisdiction: null,
-    modifications: null,
-    party1_company: null,
-    party1_name: null,
-    party1_title: null,
-    party1_notice_address: null,
-    party2_company: null,
-    party2_name: null,
-    party2_title: null,
-    party2_notice_address: null,
-    ...overrides,
-  };
+export function emptyChatFields(overrides: ChatFields = {}): ChatFields {
+  return { ...overrides };
 }
