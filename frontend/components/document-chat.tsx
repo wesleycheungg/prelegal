@@ -10,6 +10,7 @@ import {
   filledFieldNames,
   sendMessage,
 } from "@/lib/chat";
+import { Button, focusRing } from "./ui";
 import type { DocumentValues } from "@/lib/document-values";
 import type { DocumentSchema } from "@/lib/field-schema";
 
@@ -179,14 +180,14 @@ export function DocumentChat({
         role="log"
         aria-live="polite"
         aria-label="Conversation"
-        className="flex min-h-[24rem] flex-1 flex-col gap-3 overflow-y-auto rounded-lg border border-slate-200 bg-white p-4"
+        className="flex min-h-[24rem] flex-1 flex-col gap-3 overflow-y-auto rounded-xl border border-line bg-surface p-4"
       >
         {turns.map((turn, index) => (
           <Bubble key={index} turn={turn} />
         ))}
 
         {busy && (
-          <p className="w-fit rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-500">
+          <p className="w-fit rounded-lg bg-canvas px-3 py-2 text-sm text-muted">
             <span className="sr-only">The assistant is replying</span>
             <span aria-hidden>…</span>
           </p>
@@ -196,10 +197,11 @@ export function DocumentChat({
       {available === false ? (
         <p
           role="status"
-          className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+          className="rounded-lg border border-accent/50 bg-accent/10 px-3 py-2 text-sm text-navy"
         >
           The chat needs the backend running. Start it with{" "}
-          <code className="font-mono">scripts/start-mac.sh</code> and open{" "}
+          <code className="font-mono text-navy">scripts/start-mac.sh</code> and
+          open{" "}
           <a className="underline" href="http://localhost:8000">
             localhost:8000
           </a>
@@ -228,16 +230,11 @@ export function DocumentChat({
                 ? "Tell the assistant about your agreement…"
                 : "Describe the agreement you need…"
             }
-            className="min-h-[3rem] flex-1 resize-y rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
+            className={`min-h-[3rem] flex-1 resize-y rounded-md border border-line bg-surface px-3 py-2 text-sm text-navy placeholder:text-muted focus:outline-none ${focusRing}`}
           />
-          <button
-            type="button"
-            onClick={send}
-            disabled={busy || !draft.trim()}
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
-          >
+          <Button onClick={send} disabled={busy || !draft.trim()}>
             Send
-          </button>
+          </Button>
         </div>
       )}
     </section>
@@ -247,7 +244,7 @@ export function DocumentChat({
 function Bubble({ turn }: { turn: Turn }) {
   if (turn.role === "user") {
     return (
-      <p className="ml-auto w-fit max-w-[85%] rounded-lg bg-slate-900 px-3 py-2 text-sm whitespace-pre-wrap text-white">
+      <p className="ml-auto w-fit max-w-[85%] rounded-lg bg-navy px-3 py-2 text-sm whitespace-pre-wrap text-white">
         {turn.content}
       </p>
     );
@@ -258,7 +255,7 @@ function Bubble({ turn }: { turn: Turn }) {
       <p
         role={turn.failed ? "alert" : undefined}
         className={`rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${
-          turn.failed ? "bg-red-50 text-red-700" : "bg-slate-100 text-slate-900"
+          turn.failed ? "bg-red-50 text-red-700" : "bg-canvas text-navy"
         }`}
       >
         {turn.content}
@@ -269,7 +266,7 @@ function Bubble({ turn }: { turn: Turn }) {
           {turn.filled.map((name) => (
             <li
               key={name}
-              className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-800"
+              className="rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand"
             >
               {name}
             </li>

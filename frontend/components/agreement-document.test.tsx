@@ -19,6 +19,28 @@ beforeAll(async () => {
 });
 
 describe("AgreementDocument", () => {
+  it("carries the draft notice above the agreement", () => {
+    // Whoever reads this is deciding whether to sign it.
+    render(<AgreementDocument agreement={agreementFor()} />);
+
+    expect(
+      screen.getByText("Draft — subject to legal review"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/not legal advice.*qualified lawyer review it/),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the notice out of the agreement's own prose", () => {
+    // It is a notice about the document, never a term of it.
+    render(<AgreementDocument agreement={agreementFor()} />);
+    const article = screen.getByRole("article", { name: "Agreement" });
+
+    expect(article.querySelector("h1")?.textContent).toBe(
+      "Mutual Non-Disclosure Agreement",
+    );
+  });
+
   it("shows the agreement title as the heading", () => {
     render(<AgreementDocument agreement={agreementFor()} />);
     expect(

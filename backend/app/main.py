@@ -10,16 +10,57 @@ order of registration in `create_app` is load-bearing.
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import Any
 
 from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import Settings, get_settings
 from app.db import reset_database
-from app.routers import auth, chat, health, templates
+from app.routers import auth, chat, documents, health, templates
 
 logger = logging.getLogger(__name__)
+
+
+class ExportedSite(StaticFiles):
+    """
+    Serves a Next.js static export.
+
+    `next build` writes the `/sign-in` route as `sign-in.html`, and separately a
+    `sign-in/` directory holding the payloads the client router fetches. Given
+    `/sign-in`, Starlette finds that directory, looks inside it for an
+    `index.html` that the export does not write, and answers 404 — so every
+    route but `/` would be unreachable by URL.
+
+    Falling back to `<path>.html` is what a static host does with an export like
+    this, and what the export is built expecting.
+    """
+
+    async def get_response(self, path: str, scope: Any) -> Response:
+        response = await self._try(path, scope)
+        if response.status_code != 404 or path.endswith(".html"):
+            return response
+
+        exported = await self._try(f"{path}.html", scope)
+        return exported if exported.status_code == 200 else response
+
+    async def _try(self, path: str, scope: Any) -> Response:
+        """
+        A miss as a 404 response rather than an exception.
+
+        Starlette does one or the other depending on whether the directory
+        happens to contain a `404.html` — which this one does, since the export
+        writes one — so both have to be treated the same to look for the
+        fallback at all.
+        """
+        try:
+            return await super().get_response(path, scope)
+        except StarletteHTTPException as missing:
+            if missing.status_code != 404:
+                raise
+            return Response(status_code=404)
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -68,6 +109,7 @@ def _create_api(settings: Settings) -> FastAPI:
     api.include_router(health.router)
     api.include_router(templates.router)
     api.include_router(auth.router)
+    api.include_router(documents.router)
     api.include_router(chat.router)
 
     # Sub-applications do not inherit the parent's overrides, so tests reach
@@ -103,7 +145,7 @@ def _mount_frontend(app: FastAPI, settings: Settings) -> None:
             return FileResponse(not_found_page, status_code=404)
 
     app.mount(
-        "/", StaticFiles(directory=settings.static_dir, html=True), name="frontend"
+        "/", ExportedSite(directory=settings.static_dir, html=True), name="frontend"
     )
 
 

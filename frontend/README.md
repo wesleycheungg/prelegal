@@ -5,6 +5,10 @@ out which of the eleven catalogued documents you need, fills it in through
 conversation, and produces a complete, downloadable PDF. A form beside the chat
 does the same job by hand.
 
+Four routes: `/` to draft, `/sign-in` and `/sign-up`, and `/documents` for what
+you have saved. Drafting and downloading need no account; an account is what
+keeps a document to come back to.
+
 Built with Next.js (App Router), TypeScript and Tailwind CSS.
 
 ## Getting started

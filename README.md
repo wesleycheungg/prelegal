@@ -23,9 +23,10 @@ docker compose up --build
 docker compose down
 ```
 
-Either way the database is built from scratch on every start, so nothing you
-create survives a restart. That is intended for now — see
-[`backend/README.md`](backend/README.md).
+Either way the database is built from scratch on every start, so no account and
+no saved document survives a restart. That is intended — see
+[`backend/README.md`](backend/README.md). Drafting and downloading need no
+account at all; signing in is what keeps a document to come back to.
 
 To work on the frontend on its own, `npm run dev` in `frontend/` still serves it
 at http://localhost:3000 with hot reload, and needs no backend.
@@ -34,7 +35,7 @@ at http://localhost:3000 with hot reload, and needs no backend.
 
 | Path | Contents |
 | --- | --- |
-| `frontend/` | The web app: an AI chat that drafts any of the catalogued agreements — see [`frontend/README.md`](frontend/README.md). |
+| `frontend/` | The web app: accounts, an AI chat that drafts any of the catalogued agreements, and the documents you have saved — see [`frontend/README.md`](frontend/README.md). |
 | `backend/` | The API, and the server for the built frontend — see [`backend/README.md`](backend/README.md). |
 | `scripts/` | Start and stop the whole thing, per platform. |
 | `templates/` | [Common Paper](https://commonpaper.com) agreement templates in markdown, each with a fill-in cover page. |

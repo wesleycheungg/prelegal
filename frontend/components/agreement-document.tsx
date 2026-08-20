@@ -12,6 +12,13 @@ export function AgreementDocument({ agreement }: { agreement: Agreement }) {
     // Labelled so the finished document is a landmark a screen reader can jump
     // to, separately from the form that drives it.
     <article className="document" aria-label="Agreement">
+      <div className="avoid-break mb-8 rounded-lg border border-accent/50 bg-accent/10 px-4 py-3">
+        <p className="text-xs font-bold tracking-wide text-navy uppercase">
+          {agreement.disclaimer.heading}
+        </p>
+        <p className="mt-1 text-xs text-navy">{agreement.disclaimer.body}</p>
+      </div>
+
       <h1>{agreement.title}</h1>
       <p>
         <Runs runs={agreement.intro} />

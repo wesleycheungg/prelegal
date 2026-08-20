@@ -68,6 +68,10 @@ class Settings(BaseSettings):
     # with its length. These bound what one request can spend: a long
     # conversation is refused rather than quietly becoming expensive, and a
     # runaway client cannot run up a bill one enormous request at a time.
+    # A saved agreement is a map of field values. Generous next to any real
+    # document, and small enough that a client cannot fill the disk with one.
+    document_max_bytes: int = 256 * 1024
+
     chat_max_messages: int = 40
     chat_max_message_chars: int = 4000
     chat_max_tokens: int = 800

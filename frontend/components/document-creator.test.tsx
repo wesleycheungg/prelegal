@@ -13,8 +13,15 @@ import {
 } from "vitest";
 
 import { DocumentCreator } from "./document-creator";
+import { SessionProvider } from "./session";
+import { currentUser } from "@/lib/auth";
+import {
+  createSavedDocument,
+  readSavedDocument,
+  updateSavedDocument,
+} from "@/lib/saved-documents";
 import type { DocumentDefinition } from "@/lib/templates";
-import { loadAllDocuments } from "@/test/helpers";
+import { loadAllDocuments, sampleValues } from "@/test/helpers";
 
 // The PDF renderer is dynamically imported by the download handler. Stubbing it
 // keeps these tests about the flow; `document-pdf.test.tsx` covers real output.
@@ -30,6 +37,25 @@ vi.mock("@/lib/chat", async () => ({
   ...(await vi.importActual<typeof import("@/lib/chat")>("@/lib/chat")),
   backendIsReachable: vi.fn(async () => true),
   sendMessage: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => "/",
+}));
+
+vi.mock("@/lib/auth", async () => ({
+  ...(await vi.importActual<typeof import("@/lib/auth")>("@/lib/auth")),
+  currentUser: vi.fn(async () => null),
+}));
+
+vi.mock("@/lib/saved-documents", async () => ({
+  ...(await vi.importActual<typeof import("@/lib/saved-documents")>(
+    "@/lib/saved-documents",
+  )),
+  createSavedDocument: vi.fn(),
+  updateSavedDocument: vi.fn(),
+  readSavedDocument: vi.fn(),
 }));
 
 vi.mock("@react-pdf/renderer", () => ({
@@ -51,6 +77,8 @@ beforeAll(async () => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(currentUser).mockResolvedValue(null);
+  window.history.replaceState({}, "", "/");
   URL.createObjectURL = vi.fn(() => "blob:agreement");
   URL.revokeObjectURL = vi.fn();
 });
@@ -59,7 +87,25 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const renderCreator = () => render(<DocumentCreator documents={documents} />);
+const renderCreator = () =>
+  render(
+    <SessionProvider>
+      <DocumentCreator documents={documents} />
+    </SessionProvider>,
+  );
+
+const USER = {
+  id: 1,
+  email: "ada@example.com",
+  created_at: "2026-08-20T09:00:00Z",
+};
+const SAVED = {
+  id: 7,
+  slug: "mutual-nda",
+  name: "Acme and Globex",
+  created_at: "2026-08-19T09:00:00Z",
+  updated_at: "2026-08-20T09:00:00Z",
+};
 
 /** Picks a document, which is what the chat normally does. */
 const choose = async (title: string) => {
@@ -119,7 +165,7 @@ describe("DocumentCreator", () => {
     ).toBeInTheDocument();
     // The header names the tool; the document names itself.
     expect(
-      screen.getByRole("heading", { level: 1, name: "Agreement Creator" }),
+      screen.getByRole("heading", { level: 1, name: "Draft an agreement" }),
     ).toBeInTheDocument();
   });
 
@@ -341,6 +387,234 @@ describe("DocumentCreator", () => {
       await waitFor(() =>
         expect(screen.queryByRole("alert")).not.toBeInTheDocument(),
       );
+    });
+  });
+
+  describe("saving", () => {
+    it("offers the way in rather than a Save button when signed out", async () => {
+      renderCreator();
+      await choose("Mutual Non-Disclosure Agreement");
+
+      expect(
+        await screen.findByRole("link", { name: "Sign in to save" }),
+      ).toHaveAttribute("href", "/sign-in");
+      expect(
+        screen.queryByRole("button", { name: "Save" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("saves the agreement under a name built from the parties", async () => {
+      const user = userEvent.setup();
+      vi.mocked(currentUser).mockResolvedValue(USER);
+      vi.mocked(createSavedDocument).mockResolvedValue({
+        ...SAVED,
+        values: {} as never,
+      });
+      renderCreator();
+      await choose("Mutual Non-Disclosure Agreement");
+      await showForm();
+
+      const party1 = screen.getByRole("group", { name: "PARTY 1" });
+      const party2 = screen.getByRole("group", { name: "PARTY 2" });
+      await user.type(within(party1).getByLabelText("Company"), "Acme Inc.");
+      await user.type(within(party2).getByLabelText("Company"), "Globex Ltd.");
+
+      await user.click(await screen.findByRole("button", { name: "Save" }));
+
+      await waitFor(() => expect(createSavedDocument).toHaveBeenCalled());
+      const [slug, name] = vi.mocked(createSavedDocument).mock.calls[0];
+      expect(slug).toBe("mutual-nda");
+      expect(name).toBe(
+        "Mutual Non-Disclosure Agreement — Acme Inc. and Globex Ltd.",
+      );
+    });
+
+    it("says so once it is saved, and lets the name be changed", async () => {
+      const user = userEvent.setup();
+      vi.mocked(currentUser).mockResolvedValue(USER);
+      vi.mocked(createSavedDocument).mockResolvedValue({
+        ...SAVED,
+        values: {} as never,
+      });
+      renderCreator();
+      await choose("Mutual Non-Disclosure Agreement");
+
+      await user.click(await screen.findByRole("button", { name: "Save" }));
+
+      expect(await screen.findByText("Saved")).toBeInTheDocument();
+      expect(screen.getByLabelText("Document name")).toHaveValue(
+        "Acme and Globex",
+      );
+    });
+
+    it("says why a save was refused", async () => {
+      const user = userEvent.setup();
+      const { SaveError } = await vi.importActual<
+        typeof import("@/lib/saved-documents")
+      >("@/lib/saved-documents");
+      vi.mocked(currentUser).mockResolvedValue(USER);
+      vi.mocked(createSavedDocument).mockRejectedValue(
+        new SaveError("That document is too large to save."),
+      );
+      renderCreator();
+      await choose("Mutual Non-Disclosure Agreement");
+
+      await user.click(await screen.findByRole("button", { name: "Save" }));
+
+      expect(
+        await screen.findByText("That document is too large to save."),
+      ).toBeInTheDocument();
+    });
+
+    it("does not save anything the user did not ask to save", async () => {
+      // Nobody who has not pressed Save should find drafts in their list.
+      const user = userEvent.setup();
+      vi.mocked(currentUser).mockResolvedValue(USER);
+      renderCreator();
+      await choose("Mutual Non-Disclosure Agreement");
+      await showForm();
+      await user.type(screen.getByLabelText("Governing Law"), "Delaware");
+
+      expect(createSavedDocument).not.toHaveBeenCalled();
+      expect(updateSavedDocument).not.toHaveBeenCalled();
+    });
+
+    it("forgets the saved document when the agreement type changes", async () => {
+      const user = userEvent.setup();
+      vi.mocked(currentUser).mockResolvedValue(USER);
+      vi.mocked(createSavedDocument).mockResolvedValue({
+        ...SAVED,
+        values: {} as never,
+      });
+      renderCreator();
+      await choose("Mutual Non-Disclosure Agreement");
+      await user.click(await screen.findByRole("button", { name: "Save" }));
+      await screen.findByText("Saved");
+
+      await choose("Pilot Agreement");
+
+      // A different agreement is a new document, not an edit of the last one.
+      expect(
+        await screen.findByRole("button", { name: "Save" }),
+      ).toBeInTheDocument();
+    });
+  });
+
+  describe("autosaving", () => {
+    /**
+     * Real timers rather than fake ones: Testing Library's `waitFor` does not
+     * detect vitest's fake clock and hangs on it. The debounce is 1.2s, so the
+     * cost of honesty here is about a second a test.
+     */
+    const saved = async (user: ReturnType<typeof userEvent.setup>) => {
+      vi.mocked(currentUser).mockResolvedValue(USER);
+      vi.mocked(createSavedDocument).mockResolvedValue({
+        ...SAVED,
+        values: {} as never,
+      });
+      vi.mocked(updateSavedDocument).mockResolvedValue({
+        ...SAVED,
+        values: {} as never,
+      });
+      renderCreator();
+      await choose("Mutual Non-Disclosure Agreement");
+      await user.click(await screen.findByRole("button", { name: "Save" }));
+      await screen.findByLabelText("Document name");
+    };
+
+    it("saves the first edit made after a save", async () => {
+      // The edit most likely to be lost is the one right after saving: a typo
+      // spotted and corrected. There is no Save button left to press by then.
+      const user = userEvent.setup();
+      await saved(user);
+
+      await showForm();
+      await user.type(screen.getByLabelText("Governing Law"), "D");
+
+      await waitFor(() => expect(updateSavedDocument).toHaveBeenCalled(), {
+        timeout: 4000,
+      });
+    });
+
+    it("writes once for a burst of typing rather than once per keystroke", async () => {
+      const user = userEvent.setup();
+      await saved(user);
+
+      await showForm();
+      await user.type(screen.getByLabelText("Governing Law"), "Delaware");
+
+      await waitFor(() => expect(updateSavedDocument).toHaveBeenCalled(), {
+        timeout: 4000,
+      });
+      expect(updateSavedDocument).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not write anything back when nothing has changed", async () => {
+      const user = userEvent.setup();
+      await saved(user);
+
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      expect(updateSavedDocument).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("reopening", () => {
+    it("loads whatever ?document= names", async () => {
+      vi.mocked(currentUser).mockResolvedValue(USER);
+      vi.mocked(readSavedDocument).mockResolvedValue({
+        ...SAVED,
+        values: sampleValues(),
+      });
+      window.history.replaceState({}, "", "/?document=7");
+
+      renderCreator();
+
+      await waitFor(() => expect(readSavedDocument).toHaveBeenCalledWith(7));
+      expect(
+        await screen.findByRole("article", { name: "Agreement" }),
+      ).toBeInTheDocument();
+      expect(screen.getByLabelText("Document name")).toHaveValue(
+        "Acme and Globex",
+      );
+    });
+
+    it("puts the saved values back into the document", async () => {
+      vi.mocked(currentUser).mockResolvedValue(USER);
+      vi.mocked(readSavedDocument).mockResolvedValue({
+        ...SAVED,
+        values: sampleValues(),
+      });
+      window.history.replaceState({}, "", "/?document=7");
+
+      renderCreator();
+
+      expect(
+        await within(
+          await screen.findByRole("article", { name: "Agreement" }),
+        ).findByText(/Governing Law: ?Delaware/),
+      ).toBeInTheDocument();
+    });
+
+    it("says so when it cannot be opened", async () => {
+      vi.mocked(currentUser).mockResolvedValue(USER);
+      vi.mocked(readSavedDocument).mockRejectedValue(new Error("gone"));
+      window.history.replaceState({}, "", "/?document=7");
+
+      renderCreator();
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Could not open that document.",
+      );
+    });
+
+    it("asks for nothing when signed out", async () => {
+      window.history.replaceState({}, "", "/?document=7");
+
+      renderCreator();
+
+      await waitFor(() => expect(currentUser).toHaveBeenCalled());
+      expect(readSavedDocument).not.toHaveBeenCalled();
     });
   });
 });

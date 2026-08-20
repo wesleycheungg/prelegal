@@ -36,6 +36,25 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 14,
   },
+  // Ruled off above the agreement so it reads as a notice about the document
+  // rather than as the first line of it.
+  disclaimer: {
+    marginBottom: 16,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#94a3b8",
+  },
+  disclaimerHeading: {
+    fontFamily: "Times-Bold",
+    fontSize: 8,
+    letterSpacing: 1,
+    textAlign: "center",
+  },
+  disclaimerBody: {
+    fontSize: 8,
+    textAlign: "center",
+    marginTop: 3,
+  },
   paragraph: { marginBottom: 10 },
   divider: {
     marginTop: 20,
@@ -86,6 +105,13 @@ export function AgreementPdf({ agreement }: { agreement: Agreement }) {
       subject={agreement.title}
     >
       <Page size="LETTER" style={styles.page}>
+        <View style={styles.disclaimer}>
+          <Text style={styles.disclaimerHeading}>
+            {agreement.disclaimer.heading.toUpperCase()}
+          </Text>
+          <Text style={styles.disclaimerBody}>{agreement.disclaimer.body}</Text>
+        </View>
+
         <Text style={styles.title}>{agreement.title}</Text>
 
         <Text style={styles.paragraph}>

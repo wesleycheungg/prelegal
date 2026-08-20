@@ -2,6 +2,7 @@
 
 import { type ReactNode, useId } from "react";
 
+import { Label, focusRing, inputClass } from "./ui";
 import { splitAroundPlaceholder } from "@/lib/cover-page-template";
 import {
   type DocumentValues,
@@ -9,9 +10,6 @@ import {
   sanitizeYears,
 } from "@/lib/document-values";
 import type { DocumentSchema, FieldSpec } from "@/lib/field-schema";
-
-const inputClass =
-  "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-xs placeholder:text-slate-400 focus:border-slate-900 focus:outline-none";
 
 interface DocumentFormProps {
   schema: DocumentSchema;
@@ -125,7 +123,7 @@ function Field({
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
     <fieldset className="space-y-5">
-      <legend className="mb-4 w-full border-b border-slate-200 pb-2 text-sm font-semibold tracking-wide text-slate-900 uppercase">
+      <legend className="mb-4 w-full border-b border-line pb-2 text-sm font-semibold tracking-wide text-navy uppercase">
         {title}
       </legend>
       {children}
@@ -167,34 +165,6 @@ function PartyGroup({
         multiline
       />
     </Group>
-  );
-}
-
-/**
- * A field's caption. Renders as a `<legend>` for the radio groups, which caption
- * a fieldset rather than a single control, so both share one set of styles.
- */
-function Label({
-  as: Caption = "label",
-  htmlFor,
-  label,
-  hint,
-}: {
-  as?: "label" | "legend";
-  htmlFor?: string;
-  label: string;
-  hint?: string | null;
-}) {
-  return (
-    <>
-      <Caption
-        htmlFor={htmlFor}
-        className="block text-sm font-medium text-slate-800"
-      >
-        {label}
-      </Caption>
-      {hint && <p className="mt-0.5 text-xs text-slate-500">{hint}</p>}
-    </>
   );
 }
 
@@ -263,7 +233,7 @@ function DateField({
         <button
           type="button"
           onClick={() => onChange(today())}
-          className="shrink-0 rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+          className={`shrink-0 rounded-md border border-line bg-surface px-3 py-2 text-sm font-medium text-navy hover:bg-canvas ${focusRing}`}
         >
           Today
         </button>
@@ -308,13 +278,13 @@ function ChoiceField({
           const selected = value.index === index;
 
           return (
-            <label key={index} className="flex gap-2 text-sm text-slate-700">
+            <label key={index} className="flex gap-2 text-sm text-navy">
               <input
                 type="radio"
                 name={name}
                 checked={selected}
                 onChange={() => onChange({ ...value, index })}
-                className="mt-1 shrink-0"
+                className={`mt-1 shrink-0 accent-brand ${focusRing}`}
               />
               <span>
                 {option.unit === null ? (
@@ -336,7 +306,7 @@ function ChoiceField({
                       // Typing a number is a clear enough statement of intent
                       // that the option it belongs to should be the one chosen.
                       onFocus={() => onChange({ ...value, index })}
-                      className="mx-1 w-16 rounded border border-slate-300 px-1.5 py-0.5 text-sm"
+                      className={`mx-1 w-16 rounded border border-line px-1.5 py-0.5 text-sm ${focusRing}`}
                     />
                     {option.unit}
                     {after}

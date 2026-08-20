@@ -50,6 +50,7 @@ from `schema.sql` would test nothing. They read the real `templates/` and
 | `app/routers/templates.py` | The agreement templates and the catalog. |
 | `app/routers/auth.py` | Sign up, sign in, sign out, who am I. |
 | `app/routers/chat.py` | The assistant that fills in the agreement. |
+| `app/routers/documents.py` | The agreements a user has saved. |
 
 ### The database is temporary
 
