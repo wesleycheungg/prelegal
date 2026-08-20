@@ -333,10 +333,20 @@ export function DocumentCreator({ documents }: DocumentCreatorProps) {
           {agreement ? (
             <AgreementDocument agreement={agreement} />
           ) : (
-            <p className="text-sm text-muted">
-              Tell the assistant what you need and the agreement will appear
-              here.
-            </p>
+            /*
+              Sized to the document that will replace it, so choosing one does
+              not make the page jump — and so an empty workspace reads as
+              waiting rather than as something that failed to load.
+            */
+            <div className="flex min-h-[32rem] flex-col items-center justify-center px-6 text-center">
+              <p className="text-base font-medium text-navy">
+                Your agreement will appear here
+              </p>
+              <p className="mt-2 max-w-sm text-sm text-muted">
+                Tell the assistant what you need — or pick an agreement type on
+                the left — and it is drafted as you talk.
+              </p>
+            </div>
           )}
         </Panel>
       </main>
