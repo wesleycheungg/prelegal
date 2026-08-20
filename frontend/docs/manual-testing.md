@@ -131,6 +131,50 @@ Needs the backend: `scripts/start-mac.sh`, then http://localhost:8000.
 | 3c.22 | `npm run dev` on :3000, load the page | Chat shows the "needs the backend running" notice; the picker and Form still work |
 | 3c.23 | Send with Enter; Shift+Enter | Enter sends, Shift+Enter starts a new line |
 
+## 3d. Accounts
+
+Needs the backend. Accounts are cleared whenever the server restarts, so expect
+to register again after one.
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 3d.1 | Visit `/` signed out | The whole tool works: pick a document, chat, fill the form, download a PDF. Only saving is unavailable |
+| 3d.2 | Choose a document signed out | The header offers "Sign in to save", not a Save button |
+| 3d.3 | `/sign-up` with a short password | Refused, with the server's own reason, and you stay on the page |
+| 3d.4 | Register properly | Lands back on `/`, header shows your email and a Sign out |
+| 3d.5 | Register the same address twice | "That email is already registered" |
+| 3d.6 | Sign out, then sign in with the wrong password | "Incorrect email or password" — never which half was wrong |
+| 3d.7 | Reload any page while signed in | The header shows your email immediately; "Sign in" never flashes first |
+| 3d.8 | Sign in with the browser's password manager | Sign-in offers the saved password; sign-up offers to generate a new one |
+| 3d.9 | Visit `/sign-in` by typing the URL | Loads. So do `/sign-up` and `/documents` — every route is reachable by URL, not only by clicking |
+| 3d.10 | Visit a path that does not exist | The app's own 404 page |
+
+## 3e. Saved documents
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 3e.1 | Fill in an agreement, press Save | Header shows the document's name and "Saved" |
+| 3e.2 | Keep editing after saving | It saves itself about a second after you stop typing. No button to press |
+| 3e.3 | Rename it in the header | The new name is kept, and appears in My documents |
+| 3e.4 | Open My documents | Your agreement is listed, newest first, with when it was last changed |
+| 3e.5 | Click it | Opens at `/?document=<id>` with every value exactly as you left it — including the chat's answers and the term you picked |
+| 3e.6 | Reload that URL | Same document again. Bookmark it and it still works |
+| 3e.7 | Change agreement type after saving | A new, empty document. The saved one is untouched |
+| 3e.8 | Delete one | Disappears from the list without a reload; the others stay |
+| 3e.9 | Register a second account | My documents is empty. The first account's work is not visible |
+| 3e.10 | Paste the first account's `/?document=<id>` while signed in as the second | Nothing loads, and the message says the document could not be opened — never that it belongs to someone else |
+| 3e.11 | Restart the server, then reload | Signed out, and everything is gone. Expected, and the screens say so |
+| 3e.12 | Press Save with the backend stopped | An error appears beside the button, and nothing is lost from the form |
+
+## 3f. The draft notice
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 3f.1 | Look at the document pane | A notice above the agreement: draft, not legal advice, have a lawyer review it |
+| 3f.2 | Download the PDF | The same notice, ruled off above the title, smaller and centred |
+| 3f.3 | Read it as a counterparty would | It reads as a notice *about* the document, never as a clause of it |
+| 3f.4 | ⌘P the page | The notice is on the printed copy too |
+
 ## 4. Responsive layout
 
 | # | Step | Expected |
@@ -152,6 +196,9 @@ Needs the backend: `scripts/start-mac.sh`, then http://localhost:8000.
 | 5.6 | Navigate the signature table | Row and column headers announced with each cell |
 | 5.7 | Trigger a download failure (offline, throttled) | The error is announced — it is a live alert |
 | 5.8 | Zoom the browser to 200% | Layout still usable, nothing clipped |
+| 5.9 | Tab through every control on every screen | Each one shows the same focus ring. Inputs and selects too, not only buttons |
+| 5.10 | Tab through the top bar | Product name, nav links, and sign in/out all reachable and ringed |
+| 5.11 | With a screen reader, save a document | The result is announced — the save status is a live region |
 
 ## 6. Edge cases
 

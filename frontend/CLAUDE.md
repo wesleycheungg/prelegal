@@ -64,8 +64,12 @@ Backend available at http://localhost:8000
 - Dark Navy: `#032147` (headings)
 - Gray Text: `#888888`
 
-Not applied yet — the UI is still Tailwind's default neutrals. Anything that
-styles new UI should start using these.
+Applied in KAN-7 as `@theme` tokens in `app/globals.css`, named for the job each
+does: `navy`, `brand`, `accent`, `submit`, `muted`, plus `surface`, `canvas` and
+`line`. Use the token (`bg-submit`, `text-navy`), never the hex.
+
+They stop at the application. The agreement itself stays black serif on white —
+it is a legal instrument that gets printed and signed, not user interface.
 
 ## Implementation status
 
@@ -103,19 +107,30 @@ exists; if something is not listed, it has not been built.
   reply, and a reply that would leave the user with nothing to answer gets a
   question about whichever required field is still missing.
 
-All five are merged to `main` and marked Done in Jira.
+- **KAN-7** — accounts and polish. Sign-up and sign-in screens on the endpoints
+  KAN-4 built and nothing had called; agreements saved per user and reopened
+  from `/documents`, stored as one table because `DocumentValues` is already
+  document-agnostic; the brand palette applied through shared primitives in
+  `components/ui.tsx`; and a draft notice carried on the `Agreement` model so it
+  reaches the preview and the PDF alike.
+
+  Drafting stays open to anyone. An account buys saved documents, not access —
+  the form, the preview and the download all still work signed out, and with the
+  backend down.
+
+All six are merged to `main` and marked Done in Jira.
 
 ### Not built yet
 
-**KAN-7** is the only ticket left: sign-in and sign-up screens, documents saved
-per user and reopened later, visual polish, and a disclaimer that everything
-produced is a draft subject to legal review.
+No tickets remain. What a next one would most likely want:
 
-Three things already in place for it. The auth endpoints below are built and
-tested but nothing in the product calls them. `DocumentValues` is
-`{fields, choices, party1, party2}` and document-agnostic, so saved documents
-are one table keyed by slug rather than one per agreement. And the colour scheme
-above is still unapplied — the UI is Tailwind's default neutrals throughout.
+- **Documents that outlive a restart.** `reset_database` wipes everything on
+  every start, which the tickets asked for. Changing it means `schema.sql` stops
+  being a schema and starts needing migrations — the comment at the top of it
+  says as much.
+- **The colour scheme on the agreement.** Deliberately not done: a signed
+  document should not be branded.
+- **A password reset**, and anything else that needs email.
 
 ### API endpoints
 
@@ -126,11 +141,20 @@ above is still unapplied — the UI is Tailwind's default neutrals throughout.
 - `POST /api/auth/signin` — sign in, setting an HttpOnly session cookie
 - `POST /api/auth/signout` — clear the cookie
 - `GET /api/auth/me` — the signed-in user, or 401
+- `POST /api/documents` — save an agreement
+- `GET /api/documents` — this user's saved agreements, newest first, no values
+- `GET /api/documents/{id}` — one saved agreement, with its values
+- `PUT /api/documents/{id}` — rewrite its name and values
+- `DELETE /api/documents/{id}` — remove it
 - `POST /api/chat` — one turn of the conversation. With no `document` it is
   choosing which agreement is wanted and returns the slug once it knows; with
   one it returns the fields that turn settled. 404 for a slug we have no cover
   page for, 413 for an over-long conversation, 502 for any model failure, 503
   when `OPENROUTER_API_KEY` is unset
+
+Everything under `/api/documents` is scoped to the signed-in user. Somebody
+else's document answers 404 rather than 403: a 403 confirms the row exists,
+which is a fact about another person's account.
 
 Interactive docs are at http://localhost:8000/api/docs.
 
@@ -143,6 +167,9 @@ Interactive docs are at http://localhost:8000/api/docs.
 | `frontend/lib/document-values.ts` | The values a user supplies, keyed by field name, and the wording they resolve to. |
 | `frontend/lib/agreement.ts` | `buildAgreement`, the one model both the preview and the PDF render. |
 | `frontend/components/` | React. `document-creator.tsx` owns the state. |
+| `frontend/components/ui.tsx` | Button, Panel, Label, Notice and the focus ring. Use these rather than new class strings. |
+| `frontend/components/session.tsx` | Who is signed in, asked once and shared. |
+| `frontend/app/` | Four routes: `/`, `/sign-in`, `/sign-up`, `/documents`. |
 | `backend/app/field_schema.py` | The same derivation in Python, for the assistant's generated schema. |
 | `backend/app/routers/` | `health`, `templates`, `auth`, `chat`. |
 | `backend/app/db.py` | Connections, queries, and rebuilding the database. |
@@ -169,8 +196,8 @@ losing a field quietly.
 ## Testing
 
 ```bash
-cd frontend && npm test          # 229 tests
-cd backend  && uv run pytest     # 84 tests
+cd frontend && npm test          # 288 tests
+cd backend  && uv run pytest     # 111 tests
 cd backend  && uv run pytest -m live   # 6 more; calls the real model, costs money
 ```
 
