@@ -34,8 +34,25 @@ export interface SignatureRow {
   tall?: boolean;
 }
 
+/**
+ * The notice every generated agreement carries.
+ *
+ * On the model rather than in the two renderers, for the same reason everything
+ * else is: the preview and the download must say the same thing. It is a notice
+ * *about* the document, kept visually apart from it — never a term of the
+ * agreement, which contains only the template's own wording.
+ */
+export const DISCLAIMER = {
+  heading: "Draft — subject to legal review",
+  body:
+    "This document was generated from a template and is not legal advice. " +
+    "Have a qualified lawyer review it before anyone signs.",
+} as const;
+
 export interface Agreement {
   title: string;
+  /** The draft notice, shown on screen and printed on the PDF. */
+  disclaimer: typeof DISCLAIMER;
   intro: TextRun[];
   fields: AgreementField[];
   signingStatement: string;
@@ -69,6 +86,7 @@ export function buildAgreement(
 
   return {
     title: schema.title,
+    disclaimer: DISCLAIMER,
     intro: parseInline(schema.intro),
     fields: schema.fields.map((field) => ({
       heading: field.label,

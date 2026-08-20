@@ -166,6 +166,27 @@ describe("MndaPdf", () => {
     expect(text).toContain("______");
   });
 
+  it("prints the draft notice on the document itself", () => {
+    // The PDF is the thing that gets emailed around; someone handed only this
+    // is exactly the person who needs telling.
+    expect(filled.text).toContain("DRAFT — SUBJECT TO LEGAL REVIEW");
+    expect(filled.text).toContain("not legal advice");
+  });
+
+  it("puts the notice above the agreement, on the page the title is on", () => {
+    // Streams come out in file order rather than page order, so the page is
+    // found by what is on it. The title alone would match a later page too —
+    // the Standard Terms name the agreement in their own prose.
+    const page = extractPdfPages(filled.pdf).find((text) =>
+      text.includes("DRAFT — SUBJECT TO LEGAL REVIEW"),
+    );
+
+    expect(page).toBeDefined();
+    // The notice, then the agreement's own heading, then its first field.
+    expect(page!.indexOf("DRAFT")).toBeLessThan(page!.indexOf("COVER PAGE"));
+    expect(page).toContain("Mutual Non-Disclosure Agreement");
+  });
+
   it("records no modifications as 'None.'", () => {
     expect(filled.text).toContain("None.");
   });

@@ -29,11 +29,13 @@ describe("buildAgreement", () => {
       ),
     );
 
-    const { partyRoles, ...agreement } = build();
+    const { partyRoles, disclaimer, ...agreement } = build();
 
     expect(agreement).toEqual(fixture);
-    // The one addition: who signs, which used to be hardcoded in the renderers.
+    // Two additions since, and nothing else. Who signs, which used to be
+    // hardcoded in the renderers (KAN-6), and the draft notice (KAN-7).
     expect(partyRoles).toEqual(["PARTY 1", "PARTY 2"]);
+    expect(disclaimer.heading).toBe("Draft — subject to legal review");
   });
 
   it("titles the agreement from the cover page", () => {
