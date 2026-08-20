@@ -111,3 +111,77 @@ def find_user_by_id(
 def normalize_email(email: str) -> str:
     """Fold an address to the form it is stored in, so lookups match signups."""
     return email.strip().lower()
+
+
+def create_document(
+    connection: sqlite3.Connection,
+    user_id: int,
+    slug: str,
+    name: str,
+    values_json: str,
+) -> dict[str, Any]:
+    now = datetime.now(UTC).isoformat()
+    cursor = connection.execute(
+        "INSERT INTO documents (user_id, slug, name, values_json, created_at, "
+        "updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+        (user_id, slug, name, values_json, now, now),
+    )
+    created = find_document(connection, user_id, int(cursor.lastrowid or 0))
+
+    # Only reachable if the row vanished between the insert and the read, which
+    # a single connection makes impossible.
+    assert created is not None
+    return created
+
+
+def list_documents(
+    connection: sqlite3.Connection, user_id: int
+) -> list[dict[str, Any]]:
+    """A user's saved agreements, most recently changed first."""
+    rows = connection.execute(
+        "SELECT * FROM documents WHERE user_id = ? ORDER BY updated_at DESC, id DESC",
+        (user_id,),
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def find_document(
+    connection: sqlite3.Connection, user_id: int, document_id: int
+) -> dict[str, Any] | None:
+    """
+    One document, but only if it belongs to this user.
+
+    Ownership is part of the lookup rather than a check afterwards, so there is
+    no path that reads somebody else's row and then decides what to do about it.
+    """
+    row = connection.execute(
+        "SELECT * FROM documents WHERE id = ? AND user_id = ?",
+        (document_id, user_id),
+    ).fetchone()
+    return dict(row) if row else None
+
+
+def update_document(
+    connection: sqlite3.Connection,
+    user_id: int,
+    document_id: int,
+    name: str,
+    values_json: str,
+) -> dict[str, Any] | None:
+    """Rewrite a document's name and values. `None` if it is not this user's."""
+    connection.execute(
+        "UPDATE documents SET name = ?, values_json = ?, updated_at = ? "
+        "WHERE id = ? AND user_id = ?",
+        (name, values_json, datetime.now(UTC).isoformat(), document_id, user_id),
+    )
+    return find_document(connection, user_id, document_id)
+
+
+def delete_document(
+    connection: sqlite3.Connection, user_id: int, document_id: int
+) -> bool:
+    """True if a document was deleted, false if there was nothing to delete."""
+    cursor = connection.execute(
+        "DELETE FROM documents WHERE id = ? AND user_id = ?", (document_id, user_id)
+    )
+    return cursor.rowcount > 0
