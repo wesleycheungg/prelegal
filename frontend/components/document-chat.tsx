@@ -72,6 +72,8 @@ export function DocumentChat({
 
   const transcript = useRef<HTMLDivElement>(null);
   const composer = useRef<HTMLTextAreaElement>(null);
+  /** Which agreement is open now, as opposed to when a request was sent. */
+  const open = useRef<string | null>(document?.slug ?? null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -95,6 +97,12 @@ export function DocumentChat({
     if (!busy && available !== false) composer.current?.focus();
   }, [busy, available, document?.slug]);
 
+  useEffect(() => {
+    // Read by `send` after its request comes back, to find out whether the
+    // answer is still about the agreement it was asked about.
+    open.current = document?.slug ?? null;
+  });
+
   const send = async () => {
     const message = draft.trim();
     if (!message || busy) return;
@@ -111,13 +119,30 @@ export function DocumentChat({
         .slice(1)
         .map(({ role, content }) => ({ role, content }));
 
-      const turn = await sendMessage(history, document);
+      const asked = document;
+      const turn = await sendMessage(history, asked);
 
-      if (turn.document && !document) onDocument(turn.document);
-      if (document) {
-        onValues((current) =>
-          applyFields(document.schema, current, turn.fields),
-        );
+      // The agreement can be changed from the picker while this was in the
+      // air. The answer describes the one that was open when it was asked
+      // for, and most cover pages share field names, so applying it now would
+      // merge cleanly and invisibly into a document nobody confirmed it for.
+      if (open.current !== (asked?.slug ?? null)) {
+        setTurns([
+          ...spoken,
+          {
+            role: "assistant",
+            content:
+              "You changed agreement while I was answering, so I have left " +
+              "that out. Tell me again and I will fill in this one.",
+            failed: true,
+          },
+        ]);
+        return;
+      }
+
+      if (turn.document && !asked) onDocument(turn.document);
+      if (asked) {
+        onValues((current) => applyFields(asked.schema, current, turn.fields));
       }
 
       setTurns([
@@ -125,9 +150,7 @@ export function DocumentChat({
         {
           role: "assistant",
           content: turn.reply,
-          filled: document
-            ? filledFieldNames(document.schema, turn.fields)
-            : [],
+          filled: asked ? filledFieldNames(asked.schema, turn.fields) : [],
         },
       ]);
     } catch (cause) {

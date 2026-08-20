@@ -181,6 +181,95 @@ describe("DocumentChat", () => {
     });
   });
 
+  describe("when the agreement changes while a reply is in flight", () => {
+    it("does not write the answer into a different document", async () => {
+      // Effective Date and Governing Law exist on nearly every cover page, so
+      // a stale reply merges cleanly and silently into the wrong agreement.
+      let settle: (value: Awaited<ReturnType<typeof sendMessage>>) => void;
+      send.mockReturnValue(
+        new Promise((resolve) => {
+          settle = resolve;
+        }),
+      );
+      const { onValues, rerender } = renderChat();
+
+      await say("Effective 1 March 2026");
+
+      rerender(
+        <DocumentChat
+          document={{
+            slug: "cloud-service-agreement",
+            schema: mnda.schema,
+            values: createDefaultValues(mnda.schema),
+          }}
+          onDocument={vi.fn()}
+          onValues={onValues}
+        />,
+      );
+      settle!(reply({ fields: { effective_date: "2026-03-01" } }));
+
+      await screen.findByRole("alert");
+      expect(onValues).not.toHaveBeenCalled();
+    });
+
+    it("does not undo a document the user picked by hand", async () => {
+      let settle: (value: Awaited<ReturnType<typeof sendMessage>>) => void;
+      send.mockReturnValue(
+        new Promise((resolve) => {
+          settle = resolve;
+        }),
+      );
+      const { onDocument, rerender } = renderChat({ chosen: false });
+
+      await say("something for a customer trial");
+
+      rerender(
+        <DocumentChat
+          document={{
+            slug: "mutual-nda",
+            schema: mnda.schema,
+            values: sampleValues(),
+          }}
+          onDocument={onDocument}
+          onValues={vi.fn()}
+        />,
+      );
+      settle!(reply({ document: "pilot-agreement" }));
+
+      await screen.findByRole("alert");
+      expect(onDocument).not.toHaveBeenCalled();
+    });
+
+    it("says so rather than dropping the answer silently", async () => {
+      let settle: (value: Awaited<ReturnType<typeof sendMessage>>) => void;
+      send.mockReturnValue(
+        new Promise((resolve) => {
+          settle = resolve;
+        }),
+      );
+      const { onValues, rerender } = renderChat();
+
+      await say("Delaware law");
+
+      rerender(
+        <DocumentChat
+          document={{
+            slug: "pilot-agreement",
+            schema: mnda.schema,
+            values: createDefaultValues(mnda.schema),
+          }}
+          onDocument={vi.fn()}
+          onValues={onValues}
+        />,
+      );
+      settle!(reply({ fields: { governing_law: "Delaware" } }));
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        /changed agreement/i,
+      );
+    });
+  });
+
   describe("focus", () => {
     it("returns to the message box after a reply", async () => {
       send.mockResolvedValue(reply());
