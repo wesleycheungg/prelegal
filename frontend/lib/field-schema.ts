@@ -132,6 +132,20 @@ function classify(section: CoverPageSection): FieldSpec {
     required: section.required,
   };
 
+  if (!key) {
+    throw new SchemaError(
+      `"${section.heading}" leaves nothing to name a field with. Give it a heading with letters or digits in it.`,
+    );
+  }
+
+  if (section.choices.length === 1) {
+    // The parser takes choice lines out of the body, so a lone alternative
+    // would vanish from the document entirely rather than render as prose.
+    throw new SchemaError(
+      `"${section.heading}" offers one alternative. Give it two, or write it as plain text.`,
+    );
+  }
+
   if (section.choices.length >= 2) {
     return {
       ...common,

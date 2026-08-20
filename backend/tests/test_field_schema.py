@@ -120,3 +120,19 @@ def test_a_repeated_heading_fails_loudly() -> None:
 
     with pytest.raises(SchemaError, match="Two sections both headed"):
         parse_document_schema("# Test\n\n### Fees\n[a]\n\n### Fees\n[b]\n")
+
+
+def test_a_heading_with_no_usable_name_fails_loudly() -> None:
+    """The key becomes an attribute name on the generated model."""
+    from app.field_schema import SchemaError
+
+    with pytest.raises(SchemaError, match="nothing to name a field"):
+        parse_document_schema("# Test\n\n### ???\n[None]\n")
+
+
+def test_a_lone_alternative_fails_loudly() -> None:
+    """Choice lines leave the body, so a single one would vanish entirely."""
+    from app.field_schema import SchemaError
+
+    with pytest.raises(SchemaError, match="one alternative"):
+        parse_document_schema("# Test\n\n### Term\n- [x] The only option.\n")

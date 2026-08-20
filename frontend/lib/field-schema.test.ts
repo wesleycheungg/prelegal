@@ -164,6 +164,18 @@ describe("collisions", () => {
     );
   });
 
+  it("refuses a heading with nothing to make a name from", () => {
+    // The key becomes an attribute on the backend's generated model, where an
+    // empty name is not something it can build at all.
+    expect(() => withField("### ???\n[None]")).toThrow(SchemaError);
+  });
+
+  it("refuses a section offering only one alternative", () => {
+    // Choice lines are taken out of the body, so a lone one would disappear
+    // from the document rather than render as prose.
+    expect(() => withField("### Term\n- [x] The only option.")).toThrow(SchemaError);
+  });
+
   it("refuses a cover page that repeats a heading", () => {
     // Sections are keyed by heading, so the second would overwrite the first.
     expect(() => parse("# Test\n\n### Fees\n[a]\n\n### Fees\n[b]\n")).toThrow(

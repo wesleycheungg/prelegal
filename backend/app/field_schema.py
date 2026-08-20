@@ -199,12 +199,27 @@ def _hint_for(section: Section) -> str | None:
 
 
 def _classify(section: Section) -> FieldSpec:
+    key = slugify(section.heading)
     common = {
-        "key": slugify(section.heading),
+        "key": key,
         "label": section.heading,
         "hint": _hint_for(section),
         "required": section.required,
     }
+
+    if not key:
+        raise SchemaError(
+            f'"{section.heading}" leaves nothing to name a field with. '
+            "Give it a heading with letters or digits in it."
+        )
+
+    if len(section.choices) == 1:
+        # The parser takes choice lines out of the body, so a lone alternative
+        # would vanish from the document entirely rather than render as prose.
+        raise SchemaError(
+            f'"{section.heading}" offers one alternative. '
+            "Give it two, or write it as plain text."
+        )
 
     if len(section.choices) >= 2:
         return FieldSpec(
