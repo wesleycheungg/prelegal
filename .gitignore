@@ -23,6 +23,10 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# Personal Claude Code settings: a machine-specific permission allowlist with
+# absolute paths in it. `.claude/settings.json` is shared and is committed.
+.claude/settings.local.json
+
 # Virtual environments
 .venv/
 venv/
