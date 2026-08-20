@@ -1,4 +1,4 @@
-# Manual test plan — Mutual NDA creator
+# Manual test plan — Agreement creator
 
 The automated suite (`npm test`) covers what the app *says*: template parsing,
 resolved wording, form behaviour, and the text inside the generated PDF.
@@ -16,11 +16,24 @@ Run `npm run dev` and open http://localhost:3000 unless a case says otherwise.
 
 | # | Step | Expected |
 | --- | --- | --- |
-| 1.1 | Load the page | Form on the left, agreement on the right, no layout shift or flash |
-| 1.2 | Read the document pane | Cover page fields, then a signature table, then 11 numbered Standard Terms |
-| 1.3 | Check the Purpose field | Pre-filled with the template's suggested wording |
-| 1.4 | Check the Effective Date | Blank, hinted "Leave blank to complete by hand at signing" |
-| 1.5 | Check unfilled fields in the document | Show a horizontal rule to write on, not empty space |
+| 1.1 | Load the page | Chat on the left, "Tell the assistant what you need" on the right. No document yet, no layout shift |
+| 1.2 | Check the header | Download PDF and the Form toggle are both disabled until a document is chosen |
+| 1.3 | Pick Mutual NDA from **Agreement type** | Cover page fields, then a signature table, then 11 numbered Standard Terms |
+| 1.4 | Check the Purpose field | Pre-filled with the template's suggested wording |
+| 1.5 | Check the Effective Date | Blank, hinted "Leave blank to complete by hand at signing" |
+| 1.6 | Check unfilled fields in the document | Show a horizontal rule to write on, not empty space |
+
+## 1a. All eleven documents
+
+Do these once per document, from the **Agreement type** picker.
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 1a.1 | Pick each of the eleven in turn | Each renders a cover page and its own Standard Terms, with no raw `<span …>` markup anywhere |
+| 1a.2 | Check the signature table header | Names the document's own parties — PROVIDER/CUSTOMER, PROVIDER/PARTNER, COMPANY/PROVIDER, PARTY 1/PARTY 2 |
+| 1a.3 | Switch to Form | Field captions match the cover page's headings; party groups carry the same names as the table |
+| 1a.4 | Fill something in, then switch document | The new document starts empty. Nothing carries across |
+| 1a.5 | Download each one | Filename is the document's own title; the PDF opens and reads correctly |
 
 ## 2. Live preview
 
@@ -80,20 +93,43 @@ This is the part no test performs.
 
 Needs the backend: `scripts/start-mac.sh`, then http://localhost:8000.
 
+### 3c-i. Choosing a document
+
 | # | Step | Expected |
 | --- | --- | --- |
 | 3c.1 | Load the page | Chat pane on the left with a greeting; no request was made to load it |
-| 3c.2 | "An NDA between Acme Inc. and Globex Ltd." | Reply names both; chips list Party 1 and Party 2 Company; both appear in the signature table |
-| 3c.3 | "Two years, Delaware law, courts in New Castle DE" | Term reads "Expires 2 years from Effective Date." — the template's sentence, not the assistant's |
-| 3c.4 | "Effective 3 August 2026" | Document shows `August 3, 2026`. The assistant converts to ISO; a date it cannot parse is dropped rather than shown wrong |
-| 3c.5 | "Make it run until we terminate it" | Term switches to the template's second sentence |
-| 3c.6 | "Add a clause capping liability at $1m" | Declines, says it needs a lawyer, and **nothing about it appears in the document** |
-| 3c.7 | Switch to Form | Everything the chat gathered is in the fields |
-| 3c.8 | Change Governing Law in the form, switch back to Chat | The change holds, and the document shows it |
-| 3c.9 | Download PDF after a chat | Same document as the preview |
-| 3c.10 | Stop the backend, send a message | An error bubble appears and the message returns to the box; the document is untouched |
-| 3c.11 | `npm run dev` on :3000, load the page | Chat shows the "needs the backend running" notice; the Form toggle still works |
-| 3c.12 | Send with Enter; Shift+Enter | Enter sends, Shift+Enter starts a new line |
+| 3c.2 | "We want to let a customer trial our software for a month" | Picks the Pilot Agreement, says why, and the document appears on the right |
+| 3c.3 | Reload, then "I need an employment contract" | **Declines**, names the closest document it does have and what it is for, and asks whether that would work. No document is chosen |
+| 3c.4 | Answer "yes, that works" | It then picks that document |
+| 3c.5 | Reload, then "I need a lease for our offices" | Declines the same way — this is not a hard-coded list of known requests |
+| 3c.6 | Once a document is chosen, "actually make it an NDA instead" | Stays on the chosen document. Use the **Agreement type** picker to change it |
+
+### 3c-ii. Filling it in
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 3c.7 | "An NDA between Acme Inc. and Globex Ltd." | Reply names both; chips list PARTY 1 and PARTY 2 Company; both appear in the signature table |
+| 3c.8 | "Two years, Delaware law, courts in New Castle DE" | Term reads "Expires 2 years from Effective Date." — the template's sentence, not the assistant's |
+| 3c.9 | "Effective 3 August 2026" | Document shows `August 3, 2026`. The assistant converts to ISO; a date it cannot parse is dropped rather than shown wrong |
+| 3c.10 | "Make it run until we terminate it" | Term switches to the template's second sentence |
+| 3c.11 | "Add a clause capping liability at $1m" | Declines, says it needs a lawyer, and **nothing about it appears in the document** |
+| 3c.12 | Fill in a Cloud Service Agreement by chat | Its own fields are gathered — subscription period, payment process, cap — not the NDA's |
+| 3c.13 | Answer only some of what it asks | Every reply still ends with a question while anything required is blank |
+| 3c.14 | Keep going until everything required is in | It stops asking and says so |
+| 3c.15 | Switch to Form | Everything the chat gathered is in the fields |
+| 3c.16 | Change Governing Law in the form, switch back to Chat | The change holds, and the document shows it |
+| 3c.17 | Download PDF after a chat | Same document as the preview |
+
+### 3c-iii. Focus and failure
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 3c.18 | Send with the mouse, wait for the reply | **The cursor is back in the message box** — start typing without clicking |
+| 3c.19 | Send with Enter, wait for the reply | Same |
+| 3c.20 | Send a message that chooses the document | Same, even though the pane rebuilt around the new document |
+| 3c.21 | Stop the backend, send a message | An error bubble appears, the message returns to the box, focus returns to it, and the document is untouched |
+| 3c.22 | `npm run dev` on :3000, load the page | Chat shows the "needs the backend running" notice; the picker and Form still work |
+| 3c.23 | Send with Enter; Shift+Enter | Enter sends, Shift+Enter starts a new line |
 
 ## 4. Responsive layout
 
@@ -139,6 +175,9 @@ Needs the backend: `scripts/start-mac.sh`, then http://localhost:8000.
 | 7.3 | Open DevTools Network, load the page, then click Download | The PDF renderer is fetched only on click, not on load |
 | 7.4 | Build with `templates/` renamed away | Build fails with a clear error — confirms the documented coupling |
 | 7.5 | With the app served at :8000, open DevTools Network, switch to Form and fill it in | One `GET /api/health` on load, from the chat pane, and nothing after it. The form, the preview and the download stay entirely client-side |
+| 7.6 | Switch between all eleven documents with the Network tab open | No requests at all. Every template is embedded at build time |
+| 7.7 | Add a cover page without adding it to `catalog.json` | It simply does not appear — the catalog is what the app reads |
+| 7.8 | Give two sections of one cover page the same heading, or two that differ only in case | `npm run build` fails with a message naming the clash, rather than dropping a field |
 
 ---
 

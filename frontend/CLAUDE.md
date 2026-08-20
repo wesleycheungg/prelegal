@@ -8,7 +8,7 @@ The available documents are covered in the catalog.json file in the project root
 
 @catalog.json
 
-Only the Mutual NDA is built so far. See "Implementation status" at the end of this file for what actually exists.
+All eleven document types are built. See "Implementation status" at the end of this file for what actually exists.
 
 ## Development process
 
@@ -91,11 +91,20 @@ exists; if something is not listed, it has not been built.
   The model populates values and never wording — it picks between the
   template's own term sentences rather than writing one — and what it returns
   is validated before it can reach a document anyone might sign.
+- **KAN-6** — all eleven document types. Each now has a fill-in cover page in
+  `templates/`, written in the dialect the Mutual NDA's already used; the ten
+  new ones were prepared for this project from the cover-page references in
+  Common Paper's own Standard Terms, and are marked as such in `catalog.json`.
+  The chat works out which document is wanted before it fills anything in, and
+  offers the closest match when asked for something we cannot generate. Two
+  smaller changes came with it: focus returns to the message box after every
+  reply, and a reply that would leave the user with nothing to answer gets a
+  question about whichever required field is still missing.
 
 ### Not built yet
 
-The other ten document types, saved documents, and any sign-in interface. The
-auth endpoints below exist but nothing in the product calls them.
+Saved documents and any sign-in interface. The auth endpoints below exist but
+nothing in the product calls them. The colour scheme above is still unapplied.
 
 ### API endpoints
 
@@ -114,10 +123,30 @@ Interactive docs are at http://localhost:8000/api/docs.
 
 | Path | Contents |
 | --- | --- |
-| `frontend/lib/` | Pure logic: template parsing, the agreement model, wording. |
-| `frontend/components/` | React. `mnda-creator.tsx` owns the state. |
+| `frontend/lib/cover-page-template.ts` | Parses a cover page's markdown grammar. Knows nothing about any document. |
+| `frontend/lib/field-schema.ts` | Decides what each parsed section *means*: text, date, choice or grouped lines. |
+| `frontend/lib/document-values.ts` | The values a user supplies, keyed by field name, and the wording they resolve to. |
+| `frontend/lib/agreement.ts` | `buildAgreement`, the one model both the preview and the PDF render. |
+| `frontend/components/` | React. `document-creator.tsx` owns the state. |
+| `backend/app/field_schema.py` | The same derivation in Python, for the assistant's generated schema. |
 | `backend/app/routers/` | `health`, `templates`, `auth`, `chat`. |
 | `backend/app/db.py` | Connections, queries, and rebuilding the database. |
+| `field-schemas.json` | What the two derivations must agree on. Both suites assert it. |
 | `scripts/lib/serve.sh` | Start and stop, shared by Mac and Linux. |
+
+## Adding a document type
+
+Everything is driven by the templates, so a twelfth agreement needs no new code:
+
+1. Put the Standard Terms in `templates/<slug>.md`.
+2. Write `templates/<slug>-cover-page.md` — `### headings`, `<label>` hints,
+   `<optional/>` on fields the agreement can be signed without, `- [ ]` for
+   alternative wordings, `[brackets]` for what a user fills in, and a signature
+   table whose header row names the two parties.
+3. Add both to `catalog.json`.
+4. Run `UPDATE_SCHEMAS=1 npm test -- field-schemas` and read the diff.
+
+A bracket opening with "Fill in" is guidance; anything else is a suggested value
+the user can keep.
 
 Each of `frontend/` and `backend/` has a README with more detail.

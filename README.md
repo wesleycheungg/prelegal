@@ -34,11 +34,12 @@ at http://localhost:3000 with hot reload, and needs no backend.
 
 | Path | Contents |
 | --- | --- |
-| `frontend/` | The web app. Currently a Mutual NDA creator — see [`frontend/README.md`](frontend/README.md). |
+| `frontend/` | The web app: an AI chat that drafts any of the catalogued agreements — see [`frontend/README.md`](frontend/README.md). |
 | `backend/` | The API, and the server for the built frontend — see [`backend/README.md`](backend/README.md). |
 | `scripts/` | Start and stop the whole thing, per platform. |
-| `templates/` | [Common Paper](https://commonpaper.com) agreement templates in markdown. |
+| `templates/` | [Common Paper](https://commonpaper.com) agreement templates in markdown, each with a fill-in cover page. |
 | `catalog.json` | Index of the templates, with descriptions and provenance. |
+| `field-schemas.json` | The fields each cover page defines. Generated; asserted by both test suites so the frontend and backend cannot disagree. |
 | `Dockerfile` | The frontend built and served by the backend, as one image. |
 
 The templates are the source of truth for agreement wording; the app reads them
