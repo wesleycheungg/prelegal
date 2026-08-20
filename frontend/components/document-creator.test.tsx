@@ -500,6 +500,65 @@ describe("DocumentCreator", () => {
     });
   });
 
+  describe("autosaving", () => {
+    /**
+     * Real timers rather than fake ones: Testing Library's `waitFor` does not
+     * detect vitest's fake clock and hangs on it. The debounce is 1.2s, so the
+     * cost of honesty here is about a second a test.
+     */
+    const saved = async (user: ReturnType<typeof userEvent.setup>) => {
+      vi.mocked(currentUser).mockResolvedValue(USER);
+      vi.mocked(createSavedDocument).mockResolvedValue({
+        ...SAVED,
+        values: {} as never,
+      });
+      vi.mocked(updateSavedDocument).mockResolvedValue({
+        ...SAVED,
+        values: {} as never,
+      });
+      renderCreator();
+      await choose("Mutual Non-Disclosure Agreement");
+      await user.click(await screen.findByRole("button", { name: "Save" }));
+      await screen.findByLabelText("Document name");
+    };
+
+    it("saves the first edit made after a save", async () => {
+      // The edit most likely to be lost is the one right after saving: a typo
+      // spotted and corrected. There is no Save button left to press by then.
+      const user = userEvent.setup();
+      await saved(user);
+
+      await showForm();
+      await user.type(screen.getByLabelText("Governing Law"), "D");
+
+      await waitFor(() => expect(updateSavedDocument).toHaveBeenCalled(), {
+        timeout: 4000,
+      });
+    });
+
+    it("writes once for a burst of typing rather than once per keystroke", async () => {
+      const user = userEvent.setup();
+      await saved(user);
+
+      await showForm();
+      await user.type(screen.getByLabelText("Governing Law"), "Delaware");
+
+      await waitFor(() => expect(updateSavedDocument).toHaveBeenCalled(), {
+        timeout: 4000,
+      });
+      expect(updateSavedDocument).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not write anything back when nothing has changed", async () => {
+      const user = userEvent.setup();
+      await saved(user);
+
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      expect(updateSavedDocument).not.toHaveBeenCalled();
+    });
+  });
+
   describe("reopening", () => {
     it("loads whatever ?document= names", async () => {
       vi.mocked(currentUser).mockResolvedValue(USER);

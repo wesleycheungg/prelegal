@@ -63,6 +63,9 @@ export function DocumentCreator({ documents }: DocumentCreatorProps) {
   const { user } = useSession();
   const chosen = documents.find((entry) => entry.slug === slug) ?? null;
 
+  /** What the server already holds, so an unchanged document is not rewritten. */
+  const persisted = useRef<string | null>(null);
+
   const agreement = useMemo(
     () =>
       chosen && values
@@ -81,6 +84,7 @@ export function DocumentCreator({ documents }: DocumentCreatorProps) {
     setSavedId(null);
     setName("");
     setSave({ kind: "unsaved" });
+    persisted.current = null;
   };
 
   const update = (patch: Partial<DocumentValues>) =>
@@ -110,6 +114,7 @@ export function DocumentCreator({ documents }: DocumentCreatorProps) {
         ) {
           return;
         }
+        persisted.current = snapshot(document.name, document.values);
         setSlug(document.slug);
         setValues(document.values);
         setSavedId(document.id);
@@ -136,6 +141,7 @@ export function DocumentCreator({ documents }: DocumentCreatorProps) {
         ? await updateSavedDocument(savedId, chosen.slug, title, values)
         : await createSavedDocument(chosen.slug, title, values);
 
+      persisted.current = snapshot(stored.name, values);
       setSavedId(stored.id);
       setName(stored.name);
       setSave({ kind: "saved", at: new Date() });
@@ -153,24 +159,21 @@ export function DocumentCreator({ documents }: DocumentCreatorProps) {
    * Only after the user has asked for it: nobody who has not pressed Save
    * should find half-finished agreements in their list. Debounced so a sentence
    * typed into the form is one write rather than thirty.
+   *
+   * What decides whether to write is a snapshot of what the server already has,
+   * rather than a flag saying whether the last change counted. A flag has to be
+   * cleared by something, and whatever clears it runs in the same commit as the
+   * save it was meant to ignore — which cost the first edit after every save,
+   * silently, at the exact moment someone corrects a typo they have just
+   * spotted. Comparing content cannot get that wrong.
    */
-  const settled = useRef(false);
   useEffect(() => {
     if (!savedId || !values) return;
-
-    if (!settled.current) {
-      // The change that arrives with the save itself is not an edit.
-      settled.current = true;
-      return;
-    }
+    if (snapshot(name, values) === persisted.current) return;
 
     const timer = setTimeout(() => void store(), AUTOSAVE_DELAY_MS);
     return () => clearTimeout(timer);
   }, [values, name, savedId, store]);
-
-  useEffect(() => {
-    settled.current = false;
-  }, [savedId]);
 
   /**
    * Builds the PDF in the browser and saves it straight to disk.
@@ -395,4 +398,9 @@ export function DocumentCreator({ documents }: DocumentCreatorProps) {
       </div>
     );
   }
+}
+
+/** What was last written, as something two renders can be compared by. */
+function snapshot(name: string, values: DocumentValues): string {
+  return JSON.stringify({ name, values });
 }
