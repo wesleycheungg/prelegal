@@ -76,7 +76,9 @@ exists; if something is not listed, it has not been built.
 
 - **KAN-2** — the `templates/` dataset: 12 Common Paper agreement templates in
   markdown, indexed by `catalog.json`. The templates are the single source of
-  truth for wording, and the app reads them rather than restating them.
+  truth for wording, and the app reads them rather than restating them. KAN-6
+  added 10 cover pages beside them, so `templates/` now holds 22 files and the
+  catalog 22 entries: 12 from Common Paper and 10 written here.
 - **KAN-3** — the Mutual NDA creator: a form beside a live document preview, and
   a PDF download built in the browser with `@react-pdf/renderer`. Cover page and
   full Standard Terms, so the download is a complete agreement.
@@ -101,10 +103,19 @@ exists; if something is not listed, it has not been built.
   reply, and a reply that would leave the user with nothing to answer gets a
   question about whichever required field is still missing.
 
+All five are merged to `main` and marked Done in Jira.
+
 ### Not built yet
 
-Saved documents and any sign-in interface. The auth endpoints below exist but
-nothing in the product calls them. The colour scheme above is still unapplied.
+**KAN-7** is the only ticket left: sign-in and sign-up screens, documents saved
+per user and reopened later, visual polish, and a disclaimer that everything
+produced is a draft subject to legal review.
+
+Three things already in place for it. The auth endpoints below are built and
+tested but nothing in the product calls them. `DocumentValues` is
+`{fields, choices, party1, party2}` and document-agnostic, so saved documents
+are one table keyed by slug rather than one per agreement. And the colour scheme
+above is still unapplied — the UI is Tailwind's default neutrals throughout.
 
 ### API endpoints
 
@@ -115,7 +126,11 @@ nothing in the product calls them. The colour scheme above is still unapplied.
 - `POST /api/auth/signin` — sign in, setting an HttpOnly session cookie
 - `POST /api/auth/signout` — clear the cookie
 - `GET /api/auth/me` — the signed-in user, or 401
-- `POST /api/chat` — one turn of the conversation, with the fields it settled
+- `POST /api/chat` — one turn of the conversation. With no `document` it is
+  choosing which agreement is wanted and returns the slug once it knows; with
+  one it returns the fields that turn settled. 404 for a slug we have no cover
+  page for, 413 for an over-long conversation, 502 for any model failure, 503
+  when `OPENROUTER_API_KEY` is unset
 
 Interactive docs are at http://localhost:8000/api/docs.
 
@@ -147,6 +162,26 @@ Everything is driven by the templates, so a twelfth agreement needs no new code:
 4. Run `UPDATE_SCHEMAS=1 npm test -- field-schemas` and read the diff.
 
 A bracket opening with "Fill in" is guidance; anything else is a suggested value
-the user can keep.
+the user can keep. A repeated heading, a heading with no letters or digits in
+it, and a section offering only one alternative all fail the build rather than
+losing a field quietly.
+
+## Testing
+
+```bash
+cd frontend && npm test          # 229 tests
+cd backend  && uv run pytest     # 84 tests
+cd backend  && uv run pytest -m live   # 6 more; calls the real model, costs money
+```
+
+The live tests are excluded by default and skip themselves without an API key.
+They are the only thing that can catch the model being retired, the provider
+renamed, or OpenRouter rejecting a generated schema — failures that take the
+feature down without a line of our code changing.
+
+`frontend/test/mutual-nda-agreement.json` pins the Mutual NDA's rendered output
+as it shipped in KAN-3; it must not change. `frontend/docs/manual-testing.md`
+covers what no automated test can — PDF layout, cross-browser download, and how
+the assistant actually reads.
 
 Each of `frontend/` and `backend/` has a README with more detail.
