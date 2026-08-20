@@ -1,14 +1,33 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    Helvetica, Arial, sans-serif;
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+
+  /*
+   * The brand palette. Named for the job each colour does rather than for the
+   * colour it is, so a repaint is a change here and nowhere else.
+   *
+   * These style the application. They deliberately do not reach the agreement,
+   * which stays black serif on white: it is a legal instrument that gets
+   * printed and signed, not a piece of user interface.
+   */
+  --color-navy: #032147;
+  --color-brand: #209dd7;
+  --color-accent: #ecad0a;
+  --color-submit: #753991;
+  --color-muted: #888888;
+
+  --color-surface: #ffffff;
+  --color-canvas: #f4f6fa;
+  --color-line: #dfe4ec;
 }
 
 body {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: var(--color-canvas);
+  color: var(--color-navy);
   font-family: var(--font-sans);
 }
 

@@ -1,16 +1,26 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { AgreementDocument } from "./agreement-document";
 import { DocumentChat } from "./document-chat";
 import { DocumentForm } from "./document-form";
+import { useSession } from "./session";
+import { Button, Notice, Panel, focusRing, inputClass } from "./ui";
 import { agreementFileName, buildAgreement } from "@/lib/agreement";
 import {
   type DocumentValues,
   createDefaultValues,
   isComplete,
 } from "@/lib/document-values";
+import {
+  SaveError,
+  createSavedDocument,
+  readSavedDocument,
+  suggestedName,
+  updateSavedDocument,
+} from "@/lib/saved-documents";
 import type { DocumentDefinition } from "@/lib/templates";
 
 interface DocumentCreatorProps {
@@ -20,6 +30,16 @@ interface DocumentCreatorProps {
 
 /** Chat is where a user starts; the form is there to correct and to fall back on. */
 type Mode = "chat" | "form";
+
+/** How far the current agreement has got towards being stored. */
+type SaveState =
+  | { kind: "unsaved" }
+  | { kind: "saving" }
+  | { kind: "saved"; at: Date }
+  | { kind: "failed"; message: string };
+
+/** Long enough that a burst of typing is one write, short enough to feel live. */
+const AUTOSAVE_DELAY_MS = 1200;
 
 /**
  * Owns which agreement is being written, its values, and the live preview.
@@ -36,6 +56,11 @@ export function DocumentCreator({ documents }: DocumentCreatorProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [savedId, setSavedId] = useState<number | null>(null);
+  const [name, setName] = useState("");
+  const [save, setSave] = useState<SaveState>({ kind: "unsaved" });
+
+  const { user } = useSession();
   const chosen = documents.find((entry) => entry.slug === slug) ?? null;
 
   const agreement = useMemo(
@@ -52,10 +77,100 @@ export function DocumentCreator({ documents }: DocumentCreatorProps) {
     if (!target) return;
     setSlug(next);
     setValues(createDefaultValues(target.schema));
+    // A different agreement is a different document, not an edit of this one.
+    setSavedId(null);
+    setName("");
+    setSave({ kind: "unsaved" });
   };
 
   const update = (patch: Partial<DocumentValues>) =>
     setValues((current) => (current ? { ...current, ...patch } : current));
+
+  /**
+   * Reopen whatever `?document=` names.
+   *
+   * Read from the URL rather than held in memory so a saved agreement survives
+   * a reload and can be linked to. `window.location` rather than
+   * `useSearchParams`, which would put this page behind a Suspense boundary for
+   * a value that cannot be prerendered anyway.
+   */
+  useEffect(() => {
+    const id = Number(
+      new URLSearchParams(window.location.search).get("document"),
+    );
+    if (!id || !user) return;
+
+    let cancelled = false;
+
+    readSavedDocument(id)
+      .then((document) => {
+        if (
+          cancelled ||
+          !documents.some((entry) => entry.slug === document.slug)
+        ) {
+          return;
+        }
+        setSlug(document.slug);
+        setValues(document.values);
+        setSavedId(document.id);
+        setName(document.name);
+        setSave({ kind: "saved", at: new Date(document.updated_at) });
+      })
+      .catch(() => {
+        if (!cancelled) setError("Could not open that document.");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [documents, user]);
+
+  const store = useCallback(async () => {
+    if (!chosen || !values) return;
+
+    const title = name.trim() || suggestedName(chosen.schema.title, values);
+    setSave({ kind: "saving" });
+
+    try {
+      const stored = savedId
+        ? await updateSavedDocument(savedId, chosen.slug, title, values)
+        : await createSavedDocument(chosen.slug, title, values);
+
+      setSavedId(stored.id);
+      setName(stored.name);
+      setSave({ kind: "saved", at: new Date() });
+    } catch (cause) {
+      setSave({
+        kind: "failed",
+        message: cause instanceof SaveError ? cause.message : "Could not save.",
+      });
+    }
+  }, [chosen, values, name, savedId]);
+
+  /**
+   * Once it has been saved once, keep it saved.
+   *
+   * Only after the user has asked for it: nobody who has not pressed Save
+   * should find half-finished agreements in their list. Debounced so a sentence
+   * typed into the form is one write rather than thirty.
+   */
+  const settled = useRef(false);
+  useEffect(() => {
+    if (!savedId || !values) return;
+
+    if (!settled.current) {
+      // The change that arrives with the save itself is not an edit.
+      settled.current = true;
+      return;
+    }
+
+    const timer = setTimeout(() => void store(), AUTOSAVE_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [values, name, savedId, store]);
+
+  useEffect(() => {
+    settled.current = false;
+  }, [savedId]);
 
   /**
    * Builds the PDF in the browser and saves it straight to disk.
@@ -96,48 +211,43 @@ export function DocumentCreator({ documents }: DocumentCreatorProps) {
 
   return (
     <>
-      <header className="no-print border-b border-slate-200 bg-white">
+      <div className="no-print border-b border-line bg-surface">
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-4 px-6 py-4">
           <div className="mr-auto">
             {/*
-              Names the tool, not the document. The agreement carries its own
+              Names the task, not the document. The agreement carries its own
               title as a heading, and two headings reading the same thing is one
               too many for anyone navigating by them.
             */}
-            <h1 className="text-lg font-semibold text-slate-900">
-              Agreement Creator
+            <h1 className="text-lg font-semibold tracking-tight text-navy">
+              Draft an agreement
             </h1>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted">
               {chosen
                 ? `${chosen.schema.title} — talk it through and download it.`
                 : "Talk it through and download a complete agreement."}
             </p>
           </div>
 
-          {error ? (
-            <p role="alert" className="text-sm text-red-600">
-              {error}
+          {chosen && values && !isComplete(chosen.schema, values) && (
+            <p className="text-sm text-muted">
+              Blank details become empty lines to complete by hand.
             </p>
-          ) : (
-            chosen &&
-            values &&
-            !isComplete(chosen.schema, values) && (
-              <p className="text-sm text-slate-500">
-                Blank details become empty lines to complete by hand.
-              </p>
-            )
           )}
 
-          <button
-            type="button"
-            onClick={download}
-            disabled={busy || !chosen}
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
-          >
+          {chosen && <SaveControls />}
+
+          <Button onClick={download} disabled={busy || !chosen}>
             {busy ? "Preparing…" : "Download PDF"}
-          </button>
+          </Button>
         </div>
-      </header>
+
+        {error && (
+          <div className="mx-auto max-w-[1600px] px-6 pb-4">
+            <Notice tone="error">{error}</Notice>
+          </div>
+        )}
+      </div>
 
       <main className="workspace mx-auto grid w-full max-w-[1600px] flex-1 gap-8 px-6 py-8 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-start">
         <div className="no-print flex flex-col gap-4 lg:sticky lg:top-8 lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto lg:pr-2">
@@ -148,7 +258,7 @@ export function DocumentCreator({ documents }: DocumentCreatorProps) {
           */}
           <div>
             <label
-              className="block text-sm font-medium text-slate-800"
+              className="block text-sm font-medium text-navy"
               htmlFor="document-type"
             >
               Agreement type
@@ -157,7 +267,7 @@ export function DocumentCreator({ documents }: DocumentCreatorProps) {
               id="document-type"
               value={slug ?? ""}
               onChange={(event) => choose(event.target.value)}
-              className="mt-1.5 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:outline-none"
+              className={`mt-1.5 ${inputClass}`}
             >
               <option value="" disabled>
                 Not chosen yet
@@ -176,7 +286,7 @@ export function DocumentCreator({ documents }: DocumentCreatorProps) {
             would be machinery for its own sake; `aria-pressed` describes what
             these actually are and how they actually behave.
           */}
-          <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
+          <div className="flex gap-1 rounded-lg bg-canvas p-1">
             {(["chat", "form"] as const).map((option) => (
               <button
                 key={option}
@@ -184,10 +294,10 @@ export function DocumentCreator({ documents }: DocumentCreatorProps) {
                 aria-pressed={mode === option}
                 disabled={option === "form" && !chosen}
                 onClick={() => setMode(option)}
-                className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-colors disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 ${
+                className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-colors disabled:opacity-50 ${focusRing} ${
                   mode === option
-                    ? "bg-white text-slate-900 shadow-sm"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "bg-surface text-navy shadow-xs"
+                    : "text-muted hover:text-navy"
                 }`}
               >
                 {option}
@@ -216,17 +326,73 @@ export function DocumentCreator({ documents }: DocumentCreatorProps) {
           )}
         </div>
 
-        <div className="paper rounded-lg border border-slate-200 bg-white p-8 shadow-sm sm:p-12">
+        <Panel className="paper p-8 sm:p-12">
           {agreement ? (
             <AgreementDocument agreement={agreement} />
           ) : (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted">
               Tell the assistant what you need and the agreement will appear
               here.
             </p>
           )}
-        </div>
+        </Panel>
       </main>
     </>
   );
+
+  /** The save button, and what it has to say for itself. */
+  function SaveControls() {
+    if (!user) {
+      return (
+        <Link
+          href="/sign-in"
+          className={`rounded-md px-2 py-1 text-sm font-medium text-brand underline underline-offset-2 ${focusRing}`}
+        >
+          Sign in to save
+        </Link>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-3">
+        {savedId ? (
+          <>
+            <label className="sr-only" htmlFor="document-name">
+              Document name
+            </label>
+            <input
+              id="document-name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              className={`w-56 ${inputClass}`}
+            />
+          </>
+        ) : (
+          <Button
+            variant="secondary"
+            onClick={store}
+            disabled={save.kind === "saving"}
+          >
+            {save.kind === "saving" ? "Saving…" : "Save"}
+          </Button>
+        )}
+
+        {/*
+          Outside the branch above, because a first save that fails leaves no
+          document id — and reporting it only once there is one would mean the
+          one failure nobody hears about is the first.
+        */}
+        <span
+          role="status"
+          className={`text-sm ${
+            save.kind === "failed" ? "text-red-700" : "text-muted"
+          }`}
+        >
+          {save.kind === "saving" && "Saving…"}
+          {save.kind === "saved" && "Saved"}
+          {save.kind === "failed" && save.message}
+        </span>
+      </div>
+    );
+  }
 }
